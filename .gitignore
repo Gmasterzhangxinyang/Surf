@@ -1,0 +1,34 @@
+# Dataset (too large for git)
+v1.0-mini/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Model checkpoints
+train_output/*.pth
+*.pth
+*.pt
+
+# NumPy arrays
+*.npy
+
+# Output images (optional, comment out if you want to include)
+# ogm_output/
+# output/
+# output_real/
+
+# Conda / venv
+.env
+env/
+venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
