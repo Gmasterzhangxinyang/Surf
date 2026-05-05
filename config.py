@@ -15,7 +15,7 @@ class BEVConfig:
     # ---------- Depth ----------
     depth_min: float = 1.0
     depth_max: float = 40.0
-    depth_bins: int = 39
+    depth_bins: int = 59  # 新模型使用59
 
     # ---------- Camera ----------
     image_size: Tuple[int, int] = (128, 352)  # H, W
@@ -44,7 +44,7 @@ class BEVConfig:
 
     # ---------- Fusion / Head ----------
     fused_channels: int = 128
-    num_classes: int = 2  # 0=空闲, 1=占用
+    num_classes: int = 6  # 新模型使用6类
 
     # ---------- Device ----------
     device: str = "cpu"  # "cpu" or "mps"

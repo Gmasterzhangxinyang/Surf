@@ -42,10 +42,11 @@ bevfusion/
 │
 ├── config.py                  # 配置文件
 ├── train.py                   # 训练脚本
-├── run_agent_inference.py     # Agent 推理入口
-├── run_inference.py          # 原始推理入口
-├── run_ogm.py                # OGM 生成
-├── ARCHITECTURE.md           # 系统架构文档
+├── bev_comparison.py          # 对比实验主入口（baseline vs agent）
+├── run_agent_inference.py     # 旧推理入口（已被bev_comparison.py取代）
+├── run_inference.py           # 原始推理入口
+├── run_ogm.py                 # OGM 生成
+├── ARCHITECTURE.md            # 系统架构文档
 └── README.md                  # 本文档
 ```
 
@@ -101,24 +102,22 @@ VisionLLM 分析结果 → Qwen3-8B → "根据这些信息，思考应该用什
 
 ```bash
 pip install torch torchvision numpy opencv-python pyquaternion scikit-image
-pip install ollama  # 用于本地 LLM 服务
+pip install ollama  # 仅标准模式需要
 ```
 
-### 2. 启动 Ollama
+### 2. 运行对比实验
 
 ```bash
+# Fast模式（无需Ollama，纯规则决策，推荐先用这个验证）
+python bev_comparison.py --num_samples 10 --fast
+
+# 标准模式（需要Ollama + qwen2.5-vl:7b）
 ollama serve
-ollama pull qwen2.5-vl:7b  # 视觉语言模型
-```
+ollama pull qwen2.5-vl:7b
+python bev_comparison.py --num_samples 10
 
-### 3. 运行 Agent 推理
-
-```bash
-# 加载训练好的权重
-python run_agent_inference.py \
-    --dataroot ./v1.0-mini \
-    --sample 0 \
-    --num_samples 10
+# 单样本调试
+python bev_comparison.py --sample 0 --fast
 ```
 
 ## Agent 工具

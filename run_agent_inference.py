@@ -47,7 +47,7 @@ def run_agent_inference(args):
     model.eval()
 
     # 加载训练好的权重
-    model_path = "train_output/best_model.pth"
+    model_path = "best_model.pth"  # 用户提供的新权重
     if os.path.exists(model_path):
         print(f"Loading trained weights from {model_path}...")
         state_dict = torch.load(model_path, map_location=device, weights_only=True)

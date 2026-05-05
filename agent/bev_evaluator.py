@@ -48,7 +48,7 @@ class BEVEvaluator:
             "class_counts": class_counts,
             "integrity": integrity,
             "score": score,
-            "needs_optimization": edge_density < 0.3 or integrity < 0.5,
+            "needs_optimization": edge_density > 10.0 or integrity < 0.5 or len(problem_coords) > 3,
             "problem_mask": self._find_problem_regions(bev_seg),
             "problem_coords": problem_coords
         }
@@ -72,22 +72,28 @@ class BEVEvaluator:
         bev_pred = bev_pred.long()
         bev_gt = bev_gt.long()
 
-        # 总体IoU
-        intersection = ((bev_pred == 1) & (bev_gt == 1)).sum()
-        union = ((bev_pred == 1) | (bev_gt == 1)).sum()
+        # 对于多类模型，转为二值: class 1=占用, 其他=空闲
+        # 因为GT只有0和1，模型可能有更多类
+        bev_pred_binary = (bev_pred == 1).long()
+        bev_gt_binary = (bev_gt == 1).long()
+
+        # 总体IoU (二值)
+        intersection = (bev_pred_binary & bev_gt_binary).sum()
+        union = (bev_pred_binary | bev_gt_binary).sum()
         iou = intersection.float() / (union.float() + 1e-6)
 
-        # 各类别IoU
+        # 各类别IoU (原始多类)
         iou_per_class = {}
-        for cls in [0, 1, 2]:  # free, car, pedestrian等
+        unique_classes = torch.unique(torch.cat([bev_pred.flatten(), bev_gt.flatten()])).tolist()
+        for cls in unique_classes:
             pred_cls = (bev_pred == cls)
             gt_cls = (bev_gt == cls)
             inter = (pred_cls & gt_cls).sum()
             un = (pred_cls | gt_cls).sum()
             iou_per_class[cls] = inter.float() / (un.float() + 1e-6)
 
-        # Accuracy
-        accuracy = (bev_pred == bev_gt).float().mean()
+        # Accuracy (二值)
+        accuracy = (bev_pred_binary == bev_gt_binary).float().mean()
 
         return {
             "iou": iou.item(),
@@ -131,18 +137,18 @@ class BEVEvaluator:
         resolution_x = (x_max - x_min) / bev_w
         resolution_y = (y_max - y_min) / bev_h
 
-        # 处理batch维度，取第一个样本
-        if extrinsics.dim() == 3:
-            extrinsics = extrinsics[0]  # (N_cams, 4, 4)
-        if intrinsics.dim() == 3:
-            intrinsics = intrinsics[0]  # (N_cams, 3, 3)
-
-        n_cams = extrinsics.shape[0]
-        results = []
-
-        # 移到CPU做计算（MPS对某些操作支持不完整）
+        # 移到CPU做计算，先转numpy再处理维度
         extrinsics_np = extrinsics.detach().cpu().numpy() if hasattr(extrinsics, 'cpu') else np.array(extrinsics)
         intrinsics_np = intrinsics.detach().cpu().numpy() if hasattr(intrinsics, 'cpu') else np.array(intrinsics)
+
+        # 处理batch维度，取第一个样本
+        while extrinsics_np.ndim > 3:
+            extrinsics_np = extrinsics_np[0]
+        while intrinsics_np.ndim > 3:
+            intrinsics_np = intrinsics_np[0]
+
+        n_cams = extrinsics_np.shape[0]
+        results = []
 
         for region in problem_coords:
             center = region.get("center", [60, 60])  # 默认中心

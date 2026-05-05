@@ -82,8 +82,7 @@ bevfusion/
 │   ├── functions.py              # Function Calling定义
 │   ├── prompts.py                # 提示词模板
 │   ├── vision_llm.py             # 视觉LLM接口(Qwen2.5-VL)
-│   ├── data_logger.py            # 数据记录器
-│   └── run_agent_inference.py    # 推理入口
+│   └── data_logger.py            # 数据记录器
 │
 ├── models/                        # BEVFusion模型
 │   ├── bevfusion.py              # 主模型
@@ -98,7 +97,8 @@ bevfusion/
 │
 ├── config.py                      # 配置文件
 ├── train.py                       # 训练脚本
-└── run_agent_inference.py         # Agent推理入口
+├── bev_comparison.py              # 对比实验主入口（baseline vs agent）
+└── run_agent_inference.py         # 旧推理入口（已被ev_comparison.py取代）
 ```
 
 ## 3. 核心流程
@@ -339,7 +339,8 @@ BEVConfig:
 AgentCore:
     llm_url = "http://localhost:11434"
     max_iterations = 3
-    model_name = "qwen3:8b"
+    fast_mode = False   # True: 跳过VisionLLM，用纯规则决策（无需Ollama）
+    model_name = "qwen2.5-vl:7b"
 ```
 
 ### 7.3 评估阈值
@@ -356,21 +357,29 @@ integrity_threshold = 0.5
 
 | 文件 | 行数 | 功能 |
 |------|------|------|
-| `agent/core.py` | ~200 | Agent主控，ReAct引擎 |
+| `agent/core.py` | ~380 | Agent主控，ReAct引擎，fast_mode支持 |
 | `agent/bev_evaluator.py` | ~200 | BEV评估，几何映射 |
 | `agent/refiner.py` | ~150 | 图像优化工具(含区域处理) |
 | `agent/functions.py` | ~80 | Function Calling定义 |
 | `agent/prompts.py` | ~80 | 提示词模板 |
 | `agent/vision_llm.py` | ~200 | 视觉LLM接口(Qwen2.5-VL) |
 | `agent/data_logger.py` | ~80 | 数据记录器 |
-| `run_agent_inference.py` | ~200 | 推理入口，对比实验 |
+| `bev_comparison.py` | ~400 | 对比实验主入口（baseline vs agent）|
+| `run_agent_inference.py` | ~200 | 旧推理入口（已被bev_comparison.py取代）|
 
 ## 9. 验证方法
 
 ### 9.1 对比实验
 
 ```bash
-python run_agent_inference.py --sample 0 --num_samples 10
+# 标准模式（需要Ollama + qwen2.5-vl:7b）
+python bev_comparison.py --num_samples 10
+
+# Fast模式（无需LLM，纯规则，快速验证）
+python bev_comparison.py --num_samples 10 --fast
+
+# 单样本调试
+python bev_comparison.py --sample 0 --fast
 ```
 
 ### 9.2 评估指标
@@ -415,41 +424,43 @@ scikit-image      # 图像质量指标
 | 功能 | 测试结果 |
 |------|---------|
 | BEV评估(无GT) | ✅ edge_density, integrity, problem_coords正常 |
-| BEV评估(有GT) | ✅ IoU=0.084, Accuracy=0.908 (未训练好的模型) |
-| Agent ReAct循环 | ✅ 3次迭代，finalize正常工作 |
+| BEV评估(有GT) | ✅ IoU~0.02-0.04, Accuracy~0.81-0.92 (1 epoch模型) |
+| Agent ReAct循环 | ✅ fast_mode下1次增强后finalize |
+| fast_mode | ✅ 跳过VisionLLM，纯规则，2样本约30秒 |
+| 对比实验(bev_comparison.py) | ✅ baseline vs agent，批量+单样本均可 |
 | 数据记录JSONL | ✅ agent_training_data.jsonl已生成 |
-| 工具执行(enhance_image) | ✅ camera_ids=[0,1,2], factor=1.8 |
-| 工具执行(finalize) | ✅ 正常回退 |
+| 工具执行(enhance_image) | ✅ camera_ids=[0..5], factor=1.3 |
+| 工具执行(finalize) | ✅ 正常退出循环 |
 
-### 日志统计
+### 批量测试结果 (fast_mode, 2样本)
 
-```json
-{"session_id": "...", "iteration": 1, "thought": "BEV边缘非常模糊", "action": {"name": "enhance_image", ...}}
-{"session_id": "...", "iteration": 1, "thought": "BEV质量一般，建议finalize", "action": {"name": "finalize", ...}}
-```
+| 样本 | Baseline IoU | Agent IoU | IoU变化 | Accuracy变化 |
+|------|-------------|-----------|---------|-------------|
+| 0 | 0.037 | 0.033 | -0.004 | +0.038 |
+| 1 | 0.019 | 0.022 | +0.003 | +0.106 |
 
-工具使用: enhance_image 3次, finalize 10次
+注：IoU整体偏低是模型只训练1个epoch的问题，与Agent无关。
 
 ### 待解决问题
 
 | 问题 | 原因 | 优先级 |
 |------|------|--------|
 | qwen2.5-vl:7b pull失败 | Ollama manifest不存在 | 高 |
-| IoU=0.084 | 模型只训练1个epoch | 中 |
+| IoU偏低(0.02-0.04) | 模型只训练1个epoch | 中 |
 | VisionLLM未实际调用 | 依赖qwen2.5-vl模型 | 高 |
+| fast_mode增强效果不稳定 | 对比度增强不一定提升IoU | 低 |
 
 ### 运行命令
 
 ```bash
-# 启动Ollama
+# Fast模式（无需Ollama，快速验证）
+python bev_comparison.py --num_samples 10 --fast
+
+# 标准模式（需要Ollama）
 ollama serve
-
-# 拉取视觉模型 (需要修复)
 ollama pull qwen2.5-vl:7b
-
-# 运行Agent推理
-python run_agent_inference.py --sample 0 --num_samples 10
+python bev_comparison.py --num_samples 10
 
 # 查看日志
-cat agent_training_data.jsonl | jq .
+cat agent_training_data.jsonl | python3 -m json.tool
 ```

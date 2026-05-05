@@ -16,17 +16,19 @@ from .vision_llm import VisionLLM
 class AgentCore:
     """Agent核心，ReAct循环引擎"""
 
-    def __init__(self, llm_url="http://localhost:11434", max_iterations=3):
+    def __init__(self, llm_url="http://localhost:11434", max_iterations=3, fast_mode=False):
         """
         Args:
             llm_url: Ollama服务地址
             max_iterations: 最大迭代次数
+            fast_mode: 跳过VisionLLM，用纯规则决策（快速模式）
         """
         self.llm_url = llm_url
         self.max_iterations = max_iterations
+        self.fast_mode = fast_mode
         self.evaluator = BEVEvaluator()
         self.refiner = ImageRefiner()
-        self.vision_llm = VisionLLM(llm_url=llm_url)
+        self.vision_llm = VisionLLM(llm_url=llm_url) if not fast_mode else None
         self.session_id = str(uuid.uuid4())
 
     def run(self, model, images, intrinsics, extrinsics, lidar_points, lidar_mask, bev_cfg=None):
@@ -76,10 +78,13 @@ class AgentCore:
             # 获取需要分析的相机ID
             camera_ids_to_analyze = self._get_unique_camera_ids(problem_camera_mapping)
 
-            # 使用视觉LLM分析这些相机的图像
-            vision_analysis = self._analyze_images_with_vision_llm(
-                images, camera_ids_to_analyze
-            )
+            # 使用视觉LLM分析这些相机的图像（fast_mode跳过）
+            if self.fast_mode:
+                vision_analysis = []
+            else:
+                vision_analysis = self._analyze_images_with_vision_llm(
+                    images, camera_ids_to_analyze
+                )
 
             # 生成描述
             problem_areas = self._format_problem_areas(
@@ -92,7 +97,8 @@ class AgentCore:
             decision = self._make_decision(
                 eval_result,
                 vision_analysis,
-                problem_areas
+                problem_areas,
+                history=history
             )
 
             if decision is None:
@@ -164,10 +170,65 @@ class AgentCore:
             print(f"视觉LLM分析失败: {e}")
             return []
 
-    def _make_decision(self, eval_result, vision_analysis, problem_areas):
+    def _make_decision(self, eval_result, vision_analysis, problem_areas, history=None):
         """根据BEV评估和视觉LLM分析做决策"""
+
+        # fast_mode: 纯规则决策，不依赖VisionLLM
+        # 只做一次增强，之后直接finalize
+        if self.fast_mode:
+            integrity = eval_result.get("integrity", 1.0)
+            already_enhanced = any(
+                h.get("decision", {}).get("action", {}).get("name") == "enhance_image"
+                for h in (history or []) if isinstance(h, dict)
+            )
+            if integrity < 0.95 and not already_enhanced:
+                return {
+                    "thought": f"[FastMode] integrity={integrity:.3f}，做一次对比度增强",
+                    "action": {
+                        "name": "enhance_image",
+                        "parameters": {"camera_ids": [0, 1, 2, 3, 4, 5], "enhancement_type": "contrast", "factor": 1.3}
+                    }
+                }
+            else:
+                return {
+                    "thought": f"[FastMode] integrity={integrity:.3f}，完成",
+                    "action": {"name": "finalize", "parameters": {}}
+                }
+
         # 如果有视觉LLM的分析结果，优先使用
         if vision_analysis:
+            # 直接从analysis中提取conditions来决定工具
+            for analysis in vision_analysis:
+                cam_id = analysis.get("camera_id", 0)
+                conditions = analysis.get("conditions", [])
+
+                # 根据conditions决定工具（更准确的匹配）
+                if "rain" in conditions:
+                    return {
+                        "thought": f"检测到{analysis.get('camera_name', cam_id)}相机图像有雨，建议去雨处理",
+                        "action": {
+                            "name": "remove_rain",
+                            "parameters": {"camera_ids": [cam_id], "regions": None}
+                        }
+                    }
+                elif "fog" in conditions or "haze" in conditions:
+                    return {
+                        "thought": f"检测到{analysis.get('camera_name', cam_id)}相机图像有雾/霾，建议去雾处理",
+                        "action": {
+                            "name": "dehaze",
+                            "parameters": {"camera_ids": [cam_id], "regions": None}
+                        }
+                    }
+                elif "glare" in conditions or "low_light" in conditions:
+                    return {
+                        "thought": f"检测到{analysis.get('camera_name', cam_id)}相机图像光照不佳(眩光/弱光)，建议增强",
+                        "action": {
+                            "name": "enhance_image",
+                            "parameters": {"camera_ids": [cam_id], "enhancement_type": "contrast", "factor": 1.5}
+                        }
+                    }
+
+            # Fallback: 如果没有匹配到conditions，使用merge_analyses的suggested_tools
             tool_plan = self.vision_llm.merge_analyses(vision_analysis)
 
             # 按优先级选择工具
