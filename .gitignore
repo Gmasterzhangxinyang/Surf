@@ -16,10 +16,18 @@ train_output/*.pth
 # NumPy arrays
 *.npy
 
-# Output images (optional, comment out if you want to include)
-# ogm_output/
-# output/
-# output_real/
+# Output images
+*.png
+*.jpg
+ogm_output/
+output/
+output_real/
+
+# Agent运行数据
+agent_training_data.jsonl
+
+# 训练输出目录
+train_output/
 
 # Conda / venv
 .env

@@ -443,12 +443,14 @@ scikit-image      # 图像质量指标
 
 ### 待解决问题
 
-| 问题 | 原因 | 优先级 |
-|------|------|--------|
-| qwen2.5-vl:7b pull失败 | Ollama manifest不存在 | 高 |
-| IoU偏低(0.02-0.04) | 模型只训练1个epoch | 中 |
-| VisionLLM未实际调用 | 依赖qwen2.5-vl模型 | 高 |
-| fast_mode增强效果不稳定 | 对比度增强不一定提升IoU | 低 |
+| 问题 | 原因 | 优先级 | 状态 |
+|------|------|--------|------|
+| qwen2.5-vl:7b pull失败 | Ollama manifest不存在 | 高 | ⚠️ 待解决 |
+| IoU偏低(0.02-0.04) | 模型只训练1个epoch | 中 | ⚠️ 需更多训练 |
+| VisionLLM未实际调用 | 依赖qwen2.5-vl模型 | 高 | ⚠️ 待解决 |
+| fast_mode重复增强 | 缺少历史记录检查 | 高 | ✅ 已修复 |
+| fast_mode用错评估字段 | evaluate()无iou字段 | 高 | ✅ 已修复 |
+| argparse --fast参数重复 | bev_comparison.py重复添加 | 高 | ✅ 已修复 |
 
 ### 运行命令
 
