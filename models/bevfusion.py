@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import BEVConfig
 from models.camera_encoder import CameraEncoder
@@ -22,13 +23,19 @@ class BEVFusion(nn.Module):
         fused → BEVSegHead → logits                (B, num_classes, H, W)
     """
 
-    def __init__(self, cfg: BEVConfig):
+    def __init__(self, cfg: BEVConfig, camera_only=False):
         super().__init__()
         self.cfg = cfg
+        self.camera_only = camera_only
         self.camera_encoder = CameraEncoder(cfg)
-        self.lidar_encoder = LiDAREncoder(cfg)
-        self.fuser = ConvFuser(cfg.cam_channels, cfg.lidar_channels, cfg.fused_channels)
-        self.seg_head = BEVSegHead(cfg.fused_channels, cfg.num_classes)
+        if not camera_only:
+            self.lidar_encoder = LiDAREncoder(cfg)
+            self.fuser = ConvFuser(
+                cfg.cam_channels, cfg.lidar_channels, cfg.fused_channels
+            )
+            self.seg_head = BEVSegHead(cfg.fused_channels, cfg.num_classes)
+        else:
+            self.seg_head = BEVSegHead(cfg.cam_channels, cfg.num_classes)
 
     def forward(self, images, intrinsics, extrinsics, lidar_points, lidar_mask):
         """
@@ -43,17 +50,14 @@ class BEVFusion(nn.Module):
             logits: (B, num_classes, bev_H, bev_W)
             bev_seg: (B, bev_H, bev_W)  argmax predictions
         """
-        # Camera branch
         cam_bev = self.camera_encoder(images, intrinsics, extrinsics)
 
-        # LiDAR branch
-        lidar_bev = self.lidar_encoder(lidar_points, lidar_mask)
+        if self.camera_only:
+            logits = self.seg_head(cam_bev)
+        else:
+            lidar_bev = self.lidar_encoder(lidar_points, lidar_mask)
+            fused = self.fuser(cam_bev, lidar_bev)
+            logits = self.seg_head(fused)
 
-        # Fusion
-        fused = self.fuser(cam_bev, lidar_bev)
-
-        # Segmentation head
-        logits = self.seg_head(fused)
         bev_seg = logits.argmax(dim=1)
-
         return logits, bev_seg

@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 from pyquaternion import Quaternion
 
 
-# nuScenes category -> our class id mapping
+# nuScenes category -> our class id mapping (2 classes: 0=free, 1=occupied)
 CATEGORY_MAP = {
     "vehicle.car": 1,
     "vehicle.truck": 1,
@@ -14,12 +14,12 @@ CATEGORY_MAP = {
     "vehicle.bus.rigid": 1,
     "vehicle.construction": 1,
     "vehicle.trailer": 1,
-    "human.pedestrian.adult": 2,
-    "human.pedestrian.child": 2,
-    "human.pedestrian.construction_worker": 2,
-    "human.pedestrian.police_officer": 2,
-    "vehicle.bicycle": 5,
-    "vehicle.motorcycle": 5,
+    "human.pedestrian.adult": 1,
+    "human.pedestrian.child": 1,
+    "human.pedestrian.construction_worker": 1,
+    "human.pedestrian.police_officer": 1,
+    "vehicle.bicycle": 1,
+    "vehicle.motorcycle": 1,
 }
 
 
@@ -44,20 +44,22 @@ def box_to_bev_mask(center, size, rotation, bev_x_range, bev_y_range, bev_size):
     w, l, h = size[0], size[1], size[2]
 
     # 4 bottom corners in box-local frame
-    corners = np.array([
-        [-w / 2, -l / 2, 0],
-        [ w / 2, -l / 2, 0],
-        [ w / 2,  l / 2, 0],
-        [-w / 2,  l / 2, 0],
-    ])
+    corners = np.array(
+        [
+            [-w / 2, -l / 2, 0],
+            [w / 2, -l / 2, 0],
+            [w / 2, l / 2, 0],
+            [-w / 2, l / 2, 0],
+        ]
+    )
 
     # Rotate and translate to ego frame
     rot_mat = rotation.rotation_matrix
     corners_ego = (rot_mat @ corners.T).T + center
 
     # Project to BEV grid indices
-    cx = ((corners_ego[:, 0] - bev_x_range[0]) / res_x)
-    cy = ((corners_ego[:, 1] - bev_y_range[0]) / res_y)
+    cx = (corners_ego[:, 0] - bev_x_range[0]) / res_x
+    cy = (corners_ego[:, 1] - bev_y_range[0]) / res_y
 
     # Rasterize the polygon using scanline
     mask = np.zeros((bev_h, bev_w), dtype=bool)
@@ -65,6 +67,7 @@ def box_to_bev_mask(center, size, rotation, bev_x_range, bev_y_range, bev_size):
 
     # Use cv2 fillPoly for simplicity
     import cv2
+
     pts_int = pts[:, ::-1].astype(np.int32)  # (y, x) for cv2
     pts_int = pts.astype(np.int32).reshape(1, -1, 2)
     # cv2 uses (x, y) ordering
@@ -125,18 +128,24 @@ def generate_bev_gt(nusc, sample, cfg):
         rotation_ego = ego_rot.inverse * rotation_global
 
         # Check if box is within BEV range
-        if (center_ego[0] < cfg.bev_x_range[0] - 5 or center_ego[0] > cfg.bev_x_range[1] + 5 or
-            center_ego[1] < cfg.bev_y_range[0] - 5 or center_ego[1] > cfg.bev_y_range[1] + 5):
+        if (
+            center_ego[0] < cfg.bev_x_range[0] - 5
+            or center_ego[0] > cfg.bev_x_range[1] + 5
+            or center_ego[1] < cfg.bev_y_range[0] - 5
+            or center_ego[1] > cfg.bev_y_range[1] + 5
+        ):
             continue
 
         # Get box corners in ego frame and rasterize
         w, l, h = size
-        corners_local = np.array([
-            [-w / 2, -l / 2],
-            [ w / 2, -l / 2],
-            [ w / 2,  l / 2],
-            [-w / 2,  l / 2],
-        ])
+        corners_local = np.array(
+            [
+                [-w / 2, -l / 2],
+                [w / 2, -l / 2],
+                [w / 2, l / 2],
+                [-w / 2, l / 2],
+            ]
+        )
         rot_2d = rotation_ego.rotation_matrix[:2, :2]
         corners_ego_2d = (rot_2d @ corners_local.T).T + center_ego[:2]
 
