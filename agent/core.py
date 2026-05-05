@@ -5,7 +5,6 @@ ReAct Agent Core - Agent主控逻辑
 import json
 import uuid
 import requests
-import cv2
 from .prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE, FEW_SHOT_EXAMPLES
 from .functions import AVAILABLE_TOOLS
 from .bev_evaluator import BEVEvaluator
