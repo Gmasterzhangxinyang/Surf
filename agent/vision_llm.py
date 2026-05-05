@@ -14,7 +14,7 @@ import requests
 class VisionLLM:
     """使用视觉LLM分析相机图像，输出结构化判断"""
 
-    def __init__(self, llm_url="http://localhost:11434", model_name="qwen2.5-vl:7b"):
+    def __init__(self, llm_url="http://localhost:11434", model_name="qwen2.5vl:7b"):
         """
         Args:
             llm_url: Ollama服务地址
@@ -72,36 +72,10 @@ class VisionLLM:
         Returns:
             dict: 分析结果
         """
-        prompt = """你是一个专业的图像质量评估专家。请分析这张图片，判断：
-
-1. 天气/环境状况 (可选多个): "rain", "fog", "haze", "clear"
-2. 光照状况: "low_light", "glare", "normal"
-3. 问题区域: 用bbox格式 [x1,y1,x2,y2] 标注问题区域，如果无问题则返回空数组
-4. 建议工具: 根据问题选择 "remove_rain", "dehaze", "enhance_image", "crop_and_zoom"
-
-请以JSON格式返回:
-{
-  "camera_id": 0,
-  "camera_name": "CAM_FRONT",
-  "analysis": "简要描述图像状况",
-  "conditions": ["rain", "low_light"],
-  "problem_regions": [
-    {"bbox": [180, 40, 320, 100], "condition": "rain", "severity": "medium"}
-  ],
-  "suggested_tools": [
-    {"tool": "remove_rain", "target_regions": [[180, 40, 320, 100]], "reason": "有明显雨滴"}
-  ]
-}
-
-如果没有发现问题:
-{
-  "camera_id": 0,
-  "camera_name": "CAM_FRONT",
-  "analysis": "图像清晰，无明显问题",
-  "conditions": ["clear"],
-  "problem_regions": [],
-  "suggested_tools": []
-}"""
+        prompt = """分析这张图片。用JSON格式回答:
+{"conditions":["rain/fog/haze/clear/low_light/glare"],
+"problem_regions":[[x1,y1,x2,y2]],
+"suggested_tools":["remove_rain/dehaze/enhance_image"]}"""
 
         # 编码图像
         image_base64 = self.encode_image(image_tensor)
@@ -114,10 +88,8 @@ class VisionLLM:
                     "messages": [
                         {
                             "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_base64}"}}
-                            ]
+                            "content": prompt,
+                            "images": [image_base64]
                         }
                     ],
                     "stream": False
@@ -132,13 +104,20 @@ class VisionLLM:
                 # 尝试解析JSON
                 try:
                     # 直接解析
-                    return json.loads(content)
+                    parsed = json.loads(content)
+                    # 添加相机信息
+                    parsed["camera_id"] = camera_id
+                    parsed["camera_name"] = self.camera_names.get(camera_id, f"Camera{camera_id}")
+                    return parsed
                 except json.JSONDecodeError:
                     # 尝试提取JSON部分
                     import re
                     json_match = re.search(r'\{[^}]+\}', content, re.DOTALL)
                     if json_match:
-                        return json.loads(json_match.group())
+                        parsed = json.loads(json_match.group())
+                        parsed["camera_id"] = camera_id
+                        parsed["camera_name"] = self.camera_names.get(camera_id, f"Camera{camera_id}")
+                        return parsed
 
                 # 如果解析失败，返回默认
                 return self._default_result(camera_id, "分析失败")
@@ -207,8 +186,13 @@ class VisionLLM:
             tools = analysis.get("suggested_tools", [])
 
             for tool_info in tools:
-                tool_name = tool_info.get("tool", "")
-                regions = tool_info.get("target_regions", [])
+                # Handle both string tools and dict tools
+                if isinstance(tool_info, str):
+                    tool_name = tool_info
+                    regions = []
+                else:
+                    tool_name = tool_info.get("tool", "")
+                    regions = tool_info.get("target_regions", [])
 
                 if tool_name == "remove_rain":
                     tool_plan["remove_rain"]["camera_ids"].append(cam_id)
