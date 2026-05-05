@@ -166,7 +166,33 @@ ego坐标系下的米坐标 (ego_x, ego_y, 0)
 能拍到该BEV位置的相机ID列表 + 图像坐标
 ```
 
-### 3.3 Agent决策流程 (ReAct)
+### 3.3 Fast Mode 纯规则决策 (无需LLM)
+
+```
+fast_mode=True 时的决策逻辑（跳过VisionLLM，纯规则）:
+
+BEV评估结果
+    │
+    ├── integrity < 0.95 且 本次会话未增强过？
+    │       │
+    │       ▼ 是
+    │   enhance_image(所有6相机, contrast, factor=1.3)
+    │       │
+    │       ▼ 执行后重新评估
+    │   integrity < 0.95 → finalize (只做一次增强，避免无限循环)
+    │
+    └── 已增强过 或 integrity >= 0.95？
+            │
+            ▼
+        finalize (输出当前BEV)
+```
+
+**关键设计**:
+- `already_enhanced` 检查: 通过 `history` 列表判断是否已做过 `enhance_image`
+- 只做**一次**对比度增强后必须 finalize（防止重复增强无意义循环）
+- 不依赖 Ollama，适合快速验证和 CI
+
+### 3.4 Agent决策流程 (ReAct + VisionLLM)
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -199,6 +225,49 @@ ego坐标系下的米坐标 (ego_x, ego_y, 0)
 │    - 最多3次迭代                                      │
 │                                                       │
 └──────────────────────────────────────────────────────┘
+```
+
+### 3.4 纯规则决策模式 (fast_mode)
+
+fast_mode 跳过 VisionLLM，完全基于 BEV 评估指标做决策，无需 Ollama 服务。
+
+```
+BEV评估结果
+    │
+    ▼
+┌──────────────────────────────────────────────────────┐
+│              fast_mode 决策逻辑                        │
+├──────────────────────────────────────────────────────┤
+│                                                       │
+│  1. 读取 integrity 值                                 │
+│                                                       │
+│  2. 检查历史是否已做过 enhance_image                  │
+│     already_enhanced = any(h.action == enhance_image) │
+│                                                       │
+│  3. 决策:                                             │
+│     if integrity < 0.95 and not already_enhanced:    │
+│         → enhance_image (全部6个相机, factor=1.3)    │
+│     else:                                             │
+│         → finalize (结束循环)                        │
+│                                                       │
+│  结果: 最多做1次增强，然后 finalize                   │
+│                                                       │
+└──────────────────────────────────────────────────────┘
+```
+
+**与标准模式对比**:
+
+| 维度 | fast_mode | 标准模式 |
+|------|-----------|---------|
+| 依赖 | 无（纯CV规则） | Ollama + qwen2.5vl:7b |
+| 决策依据 | integrity阈值 | VisionLLM图像分析 |
+| 工具选择 | 固定enhance_image | 根据天气/光照动态选择 |
+| 速度 | 快（~30s/2样本） | 慢（需LLM推理） |
+| 适用场景 | 快速验证、无GPU服务器 | 完整实验 |
+
+**启用方式**:
+```bash
+python bev_comparison.py --num_samples 10 --fast
 ```
 
 ## 4. Function Calling 工具
