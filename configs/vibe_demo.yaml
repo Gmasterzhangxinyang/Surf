@@ -1,0 +1,88 @@
+output_dir: outputs/vibe_demo
+random_seed: 42
+
+grid:
+  x_min: 0.0
+  x_max: 40.0
+  y_min: -20.0
+  y_max: 20.0
+  resolution: 0.25
+
+synthetic_scene:
+  num_ground_points_full: 30000
+  num_ground_points_observed: 7000
+  num_vehicle_points_per_vehicle: 1600
+  num_pillar_points: 900
+  add_noise: true
+  noise_std: 0.03
+
+  vehicles:
+    - id: vehicle_left_occupied
+      center: [14.0, 7.8]
+      length: 4.5
+      width: 2.0
+      height: 1.5
+    - id: vehicle_right_occupied
+      center: [26.0, -7.8]
+      length: 4.5
+      width: 2.0
+      height: 1.5
+    - id: vehicle_far_left
+      center: [32.0, 7.8]
+      length: 4.5
+      width: 2.0
+      height: 1.5
+
+  pillar:
+    center: [18.0, -1.0]
+    radius: 0.55
+    height: 2.5
+
+  hidden_obstacles:
+    - id: hidden_cart_in_preferred_slot
+      center: [8.2, 8.0]
+      length: 2.2
+      width: 1.8
+      height: 0.9
+      points: 1000
+      observed_keep_multiplier: 0.0
+
+  target_slot:
+    slot_id: slot_R3
+    center: [20.0, -8.0]
+    preference_bonus: 0.0
+
+agent:
+  top_k_regions: 3
+  max_rounds: 3
+  regions_per_round: 1
+  candidate_pool_per_round: 5
+  competitor_slots_per_round: 2
+  max_competitor_explorations: 2
+  region_size_cells: 14
+  nms_radius_cells: 18
+  stop_target_unknown_ratio: 0.30
+  weights:
+    uncertainty: 0.35
+    occlusion: 0.30
+    decision_impact: 0.25
+    obstacle_boundary: 0.10
+
+tools:
+  occupied_confidence_threshold: 0.65
+  free_confidence_threshold: 0.80
+  min_points_for_free: 20
+  min_points_for_occupied: 10
+
+visualization:
+  dpi: 160
+  figsize_single: [10, 8]
+  figsize_panel: [18, 12]
+
+llm_agent:
+  enabled: true
+  mode: auto
+  model: gpt-5.4-mini
+  allow_control_actions: false
+  output_json: ai_agent_briefing.json
+  output_markdown: ai_agent_briefing.md

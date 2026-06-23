@@ -1,0 +1,865 @@
+{
+  "sample_id": "vibe_demo_000",
+  "note": "Controlled synthetic demo. Ground truth is used only for evaluation, not for agent selection or belief update.",
+  "grid": {
+    "x_min": 0.0,
+    "x_max": 40.0,
+    "y_min": -20.0,
+    "y_max": 20.0,
+    "resolution": 0.25
+  },
+  "agent_reasoning": {
+    "goal": "Confirm a parking target using active perception before trusting the occupancy belief.",
+    "agent_type": "decision-aware active perception policy, not an LLM and not a vehicle controller",
+    "belief_inputs": [
+      "known candidate slot map",
+      "LiDAR-derived occupancy belief",
+      "unknown map",
+      "occlusion map",
+      "uncertainty map",
+      "decision impact map",
+      "obstacle boundary map"
+    ],
+    "active_questions": [
+      "Which known candidate slot is currently most plausible?",
+      "What important parking area is still unknown or occluded?",
+      "Which local region should be inspected next?",
+      "Which tool can answer that local question?",
+      "Did local evidence improve the belief without using ground truth?"
+    ],
+    "target_slot_selection": {
+      "selected_slot_id": "slot_R1",
+      "reason": "highest score from current belief over the known candidate slot map",
+      "best_score": {
+        "slot_id": "slot_R1",
+        "score": -0.4687435959276563,
+        "free_ratio": 0.3625,
+        "occupied_ratio": 0.0,
+        "unknown_ratio": 0.6375,
+        "uncertainty_mean": 0.5143749713897705,
+        "occlusion_mean": 0.0,
+        "entrance_unknown": 0.775,
+        "entrance_occupied": 0.0,
+        "distance_cost": 0.2514157444218836,
+        "preference_bonus": 0.0
+      }
+    },
+    "actions": [
+      {
+        "region_id": "r0",
+        "issue_type": "decision_critical_uncertainty",
+        "active_question": "Is the target slot or entrance clear enough to trust?",
+        "why_selected": "Target slot is still uncertain, so the agent reserves an action to verify it directly.",
+        "parking_relevance": {
+          "mean_decision_impact": 0.25,
+          "mean_uncertainty": 0.5974489450454712,
+          "mean_occlusion": 0.0,
+          "priority": 0.577038586139679
+        },
+        "selected_tools": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "belief_update_summary": "high local LiDAR points update evidence cells to occupied; visual check is recorded as placeholder evidence"
+      },
+      {
+        "region_id": "r1",
+        "issue_type": "decision_critical_uncertainty",
+        "active_question": "Could competing slot slot_R3 be safer than the current target?",
+        "why_selected": "slot_R3 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+        "parking_relevance": {
+          "mean_decision_impact": 0.1607142984867096,
+          "mean_uncertainty": 0.6272959113121033,
+          "mean_occlusion": 0.0,
+          "priority": 0.4108756482601166
+        },
+        "selected_tools": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "belief_update_summary": "low-height local LiDAR points update unknown cells to free; visual check is recorded as placeholder evidence"
+      },
+      {
+        "region_id": "r2",
+        "issue_type": "decision_critical_uncertainty",
+        "active_question": "Could competing slot slot_R1 be safer than the current target?",
+        "why_selected": "slot_R1 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+        "parking_relevance": {
+          "mean_decision_impact": 0.11250001192092896,
+          "mean_uncertainty": 0.6140305399894714,
+          "mean_occlusion": 0.0,
+          "priority": 0.4108756482601166
+        },
+        "selected_tools": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "belief_update_summary": "low-height local LiDAR points update unknown cells to free; visual check is recorded as placeholder evidence"
+      }
+    ],
+    "rounds": [
+      {
+        "round": 1,
+        "observation": {
+          "target_slot_unknown_ratio_before": 0.7041666666666667,
+          "target_slot_before": "slot_L1",
+          "num_regions_already_selected": 0
+        },
+        "selected_regions": [
+          "r0"
+        ],
+        "candidate_actions": [
+          {
+            "action_id": "a0",
+            "region_id": "r0",
+            "issue_type": "decision_critical_uncertainty",
+            "priority": 0.577038586139679,
+            "active_question": "Is the target slot or entrance clear enough to trust?",
+            "why_selected": "Target slot is still uncertain, so the agent reserves an action to verify it directly.",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "is_target_verification": true,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          }
+        ],
+        "ai_policy_advice": {
+          "mode": "deterministic_policy_fallback",
+          "fallback_reason": "OPENAI_API_KEY not set",
+          "selected_action_ids": [
+            "a0"
+          ],
+          "selected_plan": [
+            {
+              "action_id": "a0",
+              "tool_ids": [
+                "lidar_geometry_checker",
+                "image_crop_reinspect_placeholder"
+              ],
+              "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+            }
+          ],
+          "rationale": "Verify the current top-ranked slot first before exploring competitors.",
+          "risk_assessment": "Current target slot_L1 has target_unknown_ratio=0.704; action set is constrained by validator."
+        },
+        "validated_plan": [
+          {
+            "action_id": "a0",
+            "tool_ids": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+          }
+        ],
+        "validated_action_ids": [
+          "a0"
+        ],
+        "active_questions": [
+          "Is the target slot or entrance clear enough to trust?"
+        ],
+        "tool_calls": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "phase": "verify_top1",
+        "top3_before": [
+          "slot_L1",
+          "slot_R1",
+          "slot_R3"
+        ],
+        "top3_after": [
+          "slot_R1",
+          "slot_L1",
+          "slot_R3"
+        ],
+        "ranking_changed": true,
+        "target_slot_unknown_ratio_after": 0.7,
+        "target_slot_after": "slot_R1",
+        "switched_target": true,
+        "stop_reason": "top3_changed_after_top1_verification",
+        "stop_after_round": false
+      },
+      {
+        "round": 2,
+        "observation": {
+          "target_slot_unknown_ratio_before": 0.7916666666666666,
+          "target_slot_before": "slot_R1",
+          "num_regions_already_selected": 1
+        },
+        "selected_regions": [
+          "r1"
+        ],
+        "candidate_actions": [
+          {
+            "action_id": "a0",
+            "region_id": "r1",
+            "issue_type": "decision_critical_uncertainty",
+            "priority": 0.4108756482601166,
+            "active_question": "Could competing slot slot_R3 be safer than the current target?",
+            "why_selected": "slot_R3 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": true,
+            "slot_id": "slot_R3",
+            "slot_rank": 2
+          },
+          {
+            "action_id": "a1",
+            "region_id": "r2",
+            "issue_type": "unknown_high_uncertainty",
+            "priority": 0.9999987483024597,
+            "active_question": "Can local evidence reduce this high-uncertainty unknown area?",
+            "why_selected": "Region has high uncertainty from missing observation.",
+            "allowed_tools": [
+              "lidar_geometry_checker"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          },
+          {
+            "action_id": "a2",
+            "region_id": "r3",
+            "issue_type": "occluded_unknown",
+            "priority": 0.9999987483024597,
+            "active_question": "Is this occluded area hiding an obstacle relevant to parking?",
+            "why_selected": "Region has high occlusion and may hide parking-relevant risk.",
+            "allowed_tools": [
+              "occlusion_reasoning_tool"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          },
+          {
+            "action_id": "a3",
+            "region_id": "r4",
+            "issue_type": "unknown_high_uncertainty",
+            "priority": 0.9999987483024597,
+            "active_question": "Can local evidence reduce this high-uncertainty unknown area?",
+            "why_selected": "Region has high uncertainty from missing observation.",
+            "allowed_tools": [
+              "lidar_geometry_checker"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          },
+          {
+            "action_id": "a4",
+            "region_id": "r5",
+            "issue_type": "obstacle_boundary",
+            "priority": 0.9999987483024597,
+            "active_question": "Is the obstacle boundary accurate enough for a parking maneuver?",
+            "why_selected": "Region lies near an obstacle boundary where occupancy errors matter for maneuver clearance.",
+            "allowed_tools": [
+              "lidar_geometry_checker"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          }
+        ],
+        "ai_policy_advice": {
+          "mode": "deterministic_policy_fallback",
+          "fallback_reason": "OPENAI_API_KEY not set",
+          "selected_action_ids": [
+            "a0"
+          ],
+          "selected_plan": [
+            {
+              "action_id": "a0",
+              "tool_ids": [
+                "lidar_geometry_checker",
+                "image_crop_reinspect_placeholder"
+              ],
+              "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+            }
+          ],
+          "rationale": "Ranking changed, so explore the best competing slot under the limited sensing budget.",
+          "risk_assessment": "Current target slot_R1 has target_unknown_ratio=0.792; action set is constrained by validator."
+        },
+        "validated_plan": [
+          {
+            "action_id": "a0",
+            "tool_ids": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+          }
+        ],
+        "validated_action_ids": [
+          "a0"
+        ],
+        "active_questions": [
+          "Could competing slot slot_R3 be safer than the current target?"
+        ],
+        "tool_calls": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "phase": "explore_competitor",
+        "top3_before": [
+          "slot_R1",
+          "slot_L1",
+          "slot_R3"
+        ],
+        "top3_after": [
+          "slot_R3",
+          "slot_R1",
+          "slot_R2"
+        ],
+        "ranking_changed": true,
+        "target_slot_unknown_ratio_after": 0.7916666666666666,
+        "target_slot_after": "slot_R3",
+        "switched_target": true,
+        "stop_reason": "top3_changed_after_competitor_exploration",
+        "stop_after_round": false
+      },
+      {
+        "round": 3,
+        "observation": {
+          "target_slot_unknown_ratio_before": 0.6666666666666666,
+          "target_slot_before": "slot_R3",
+          "num_regions_already_selected": 2
+        },
+        "selected_regions": [
+          "r2"
+        ],
+        "candidate_actions": [
+          {
+            "action_id": "a0",
+            "region_id": "r2",
+            "issue_type": "decision_critical_uncertainty",
+            "priority": 0.4108756482601166,
+            "active_question": "Could competing slot slot_R1 be safer than the current target?",
+            "why_selected": "slot_R1 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": true,
+            "slot_id": "slot_R1",
+            "slot_rank": 1
+          },
+          {
+            "action_id": "a1",
+            "region_id": "r3",
+            "issue_type": "decision_critical_uncertainty",
+            "priority": 0.4108756482601166,
+            "active_question": "Could competing slot slot_R2 be safer than the current target?",
+            "why_selected": "slot_R2 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": true,
+            "slot_id": "slot_R2",
+            "slot_rank": 2
+          },
+          {
+            "action_id": "a2",
+            "region_id": "r4",
+            "issue_type": "unknown_high_uncertainty",
+            "priority": 0.9999987483024597,
+            "active_question": "Can local evidence reduce this high-uncertainty unknown area?",
+            "why_selected": "Region has high uncertainty from missing observation.",
+            "allowed_tools": [
+              "lidar_geometry_checker"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          },
+          {
+            "action_id": "a3",
+            "region_id": "r5",
+            "issue_type": "occluded_unknown",
+            "priority": 0.9999987483024597,
+            "active_question": "Is this occluded area hiding an obstacle relevant to parking?",
+            "why_selected": "Region has high occlusion and may hide parking-relevant risk.",
+            "allowed_tools": [
+              "occlusion_reasoning_tool"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          },
+          {
+            "action_id": "a4",
+            "region_id": "r6",
+            "issue_type": "unknown_high_uncertainty",
+            "priority": 0.9999987483024597,
+            "active_question": "Can local evidence reduce this high-uncertainty unknown area?",
+            "why_selected": "Region has high uncertainty from missing observation.",
+            "allowed_tools": [
+              "lidar_geometry_checker"
+            ],
+            "is_target_verification": false,
+            "is_competitor_slot_exploration": false,
+            "slot_id": null,
+            "slot_rank": null
+          }
+        ],
+        "ai_policy_advice": {
+          "mode": "deterministic_policy_fallback",
+          "fallback_reason": "OPENAI_API_KEY not set",
+          "selected_action_ids": [
+            "a0"
+          ],
+          "selected_plan": [
+            {
+              "action_id": "a0",
+              "tool_ids": [
+                "lidar_geometry_checker",
+                "image_crop_reinspect_placeholder"
+              ],
+              "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+            }
+          ],
+          "rationale": "Ranking changed, so explore the best competing slot under the limited sensing budget.",
+          "risk_assessment": "Current target slot_R3 has target_unknown_ratio=0.667; action set is constrained by validator."
+        },
+        "validated_plan": [
+          {
+            "action_id": "a0",
+            "tool_ids": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ],
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set."
+          }
+        ],
+        "validated_action_ids": [
+          "a0"
+        ],
+        "active_questions": [
+          "Could competing slot slot_R1 be safer than the current target?"
+        ],
+        "tool_calls": [
+          "lidar_geometry_checker",
+          "image_crop_reinspect_placeholder"
+        ],
+        "phase": "explore_competitor",
+        "top3_before": [
+          "slot_R3",
+          "slot_R1",
+          "slot_R2"
+        ],
+        "top3_after": [
+          "slot_R1",
+          "slot_R3",
+          "slot_R2"
+        ],
+        "ranking_changed": true,
+        "target_slot_unknown_ratio_after": 0.6666666666666666,
+        "target_slot_after": "slot_R1",
+        "switched_target": true,
+        "stop_reason": "max_competitor_explorations_reached",
+        "stop_after_round": true
+      }
+    ],
+    "observed_improvement": {
+      "occupied_iou_before": 0.662704309063893,
+      "occupied_iou_after": 0.6701337295690936,
+      "target_slot_unknown_ratio_before": 0.7916666666666666,
+      "target_slot_unknown_ratio_after": 0.6375,
+      "false_free_before": 68,
+      "false_free_after": 64
+    }
+  },
+  "ai_agent_briefing": {
+    "mode": "deterministic_fallback",
+    "fallback_reason": "OPENAI_API_KEY not set",
+    "headline": "AI Agent Briefing: active perception found risk and updated the parking target.",
+    "initial_target": "slot_L1",
+    "final_target": "slot_R1",
+    "recommended_decision": "Reject initial target slot_L1 and continue with slot_R1.",
+    "key_finding": "Active reinspection changed the belief enough to switch from slot_L1 to slot_R1.",
+    "round_by_round": [
+      "Round 1: slot_L1 -> slot_R1 switched target; target_unknown 0.704 -> 0.700; tools=lidar_geometry_checker, image_crop_reinspect_placeholder.",
+      "Round 2: slot_R1 -> slot_R3 switched target; target_unknown 0.792 -> 0.792; tools=lidar_geometry_checker, image_crop_reinspect_placeholder.",
+      "Round 3: slot_R3 -> slot_R1 switched target; target_unknown 0.667 -> 0.667; tools=lidar_geometry_checker, image_crop_reinspect_placeholder."
+    ],
+    "metric_summary": [
+      "False-free errors: 68 -> 64.",
+      "Occupied IoU: 0.663 -> 0.670.",
+      "Target-slot unknown ratio: 0.792 -> 0.637.",
+      "Tool calls: 6."
+    ],
+    "demo_takeaway": "The useful agent behavior is not the initial slot choice; it is the loop that inspects a risky target, updates belief from local evidence, and revises the target when needed.",
+    "limitations": [
+      "The LLM layer is explanatory and advisory; deterministic code performs the actual belief update.",
+      "Camera reinspection is still a placeholder.",
+      "The scene is synthetic and controlled, not a real-world parking benchmark."
+    ]
+  },
+  "target_slot_history": [
+    {
+      "round": 0,
+      "slot_id": "slot_L1",
+      "reason": "initial highest score from known slot map and sparse LiDAR belief"
+    },
+    {
+      "round": 1,
+      "slot_id": "slot_R1",
+      "reason": "target re-scored after local tool evidence changed the belief"
+    },
+    {
+      "round": 2,
+      "slot_id": "slot_R3",
+      "reason": "target re-scored after local tool evidence changed the belief"
+    },
+    {
+      "round": 3,
+      "slot_id": "slot_R1",
+      "reason": "target re-scored after local tool evidence changed the belief"
+    }
+  ],
+  "selected_regions": [
+    {
+      "region_id": "r0",
+      "center_cell": [
+        22,
+        106
+      ],
+      "bbox_cells": [
+        15,
+        99,
+        29,
+        113
+      ],
+      "priority": 0.577038586139679,
+      "issue_type": "decision_critical_uncertainty",
+      "selected_tools": [
+        "lidar_geometry_checker",
+        "image_crop_reinspect_placeholder"
+      ],
+      "metadata": {
+        "mean_uncertainty": 0.5974489450454712,
+        "mean_occlusion": 0.0,
+        "mean_decision_impact": 0.25,
+        "mean_boundary": 0.0,
+        "active_question": "Is the target slot or entrance clear enough to trust?",
+        "why_selected": "Target slot is still uncertain, so the agent reserves an action to verify it directly.",
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "selection_note": "target-slot verification action"
+      }
+    },
+    {
+      "region_id": "r1",
+      "center_cell": [
+        70,
+        42
+      ],
+      "bbox_cells": [
+        63,
+        35,
+        77,
+        49
+      ],
+      "priority": 0.4108756482601166,
+      "issue_type": "decision_critical_uncertainty",
+      "selected_tools": [
+        "lidar_geometry_checker",
+        "image_crop_reinspect_placeholder"
+      ],
+      "metadata": {
+        "slot_id": "slot_R3",
+        "slot_rank": 2,
+        "mean_uncertainty": 0.6272959113121033,
+        "mean_occlusion": 0.0,
+        "mean_decision_impact": 0.1607142984867096,
+        "mean_boundary": 0.0,
+        "active_question": "Could competing slot slot_R3 be safer than the current target?",
+        "why_selected": "slot_R3 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "selection_note": "competitor-slot exploration action"
+      }
+    },
+    {
+      "region_id": "r2",
+      "center_cell": [
+        22,
+        42
+      ],
+      "bbox_cells": [
+        15,
+        35,
+        29,
+        49
+      ],
+      "priority": 0.4108756482601166,
+      "issue_type": "decision_critical_uncertainty",
+      "selected_tools": [
+        "lidar_geometry_checker",
+        "image_crop_reinspect_placeholder"
+      ],
+      "metadata": {
+        "slot_id": "slot_R1",
+        "slot_rank": 1,
+        "mean_uncertainty": 0.6140305399894714,
+        "mean_occlusion": 0.0,
+        "mean_decision_impact": 0.11250001192092896,
+        "mean_boundary": 0.0,
+        "active_question": "Could competing slot slot_R1 be safer than the current target?",
+        "why_selected": "slot_R1 is a high-scoring competing slot; exploring it reduces bias from only rechecking the current target.",
+        "chosen_tool_reason": "Use local LiDAR evidence and a visual placeholder because this region affects the parking slot decision.",
+        "selection_note": "competitor-slot exploration action"
+      }
+    }
+  ],
+  "target_slot": {
+    "slot_id": "slot_R1",
+    "note": "Selected from known candidate slot map using current belief, not ground truth."
+  },
+  "slot_scores": [
+    {
+      "slot_id": "slot_R1",
+      "score": -0.4687435959276563,
+      "free_ratio": 0.3625,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.6375,
+      "uncertainty_mean": 0.5143749713897705,
+      "occlusion_mean": 0.0,
+      "entrance_unknown": 0.775,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.2514157444218836,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_R3",
+      "score": -0.607427179944431,
+      "free_ratio": 0.3333333333333333,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.6666666666666666,
+      "uncertainty_mean": 0.5333333015441895,
+      "occlusion_mean": 0.0,
+      "entrance_unknown": 0.91875,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.47868131618973364,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_R2",
+      "score": -0.8441233876112615,
+      "free_ratio": 0.2,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.8,
+      "uncertainty_mean": 0.6200000047683716,
+      "occlusion_mean": 0.0,
+      "entrance_unknown": 0.83125,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.3583225665910466,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_L1",
+      "score": -0.943701955824793,
+      "free_ratio": 0.2791666666666667,
+      "occupied_ratio": 0.020833333333333332,
+      "unknown_ratio": 0.7,
+      "uncertainty_mean": 0.6552083492279053,
+      "occlusion_mean": 0.20000000298023224,
+      "entrance_unknown": 0.76875,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.2514157444218836,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_L4",
+      "score": -1.0221452423503736,
+      "free_ratio": 0.1375,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.8625,
+      "uncertainty_mean": 0.6606250405311584,
+      "occlusion_mean": 0.0,
+      "entrance_unknown": 0.8625,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.604509800388242,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_L3",
+      "score": -1.298135534059917,
+      "free_ratio": 0.19583333333333333,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.8041666666666667,
+      "uncertainty_mean": 0.8141666650772095,
+      "occlusion_mean": 0.4625000059604645,
+      "entrance_unknown": 0.825,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.47868131618973364,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_R5",
+      "score": -1.782470326498036,
+      "free_ratio": 0.0875,
+      "occupied_ratio": 0.0,
+      "unknown_ratio": 0.9125,
+      "uncertainty_mean": 0.9129167199134827,
+      "occlusion_mean": 0.7166666388511658,
+      "entrance_unknown": 0.90625,
+      "entrance_occupied": 0.0,
+      "distance_cost": 0.7329965556653619,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_L5",
+      "score": -4.703209891393665,
+      "free_ratio": 0.05,
+      "occupied_ratio": 0.5375,
+      "unknown_ratio": 0.4125,
+      "uncertainty_mean": 0.5506249666213989,
+      "occlusion_mean": 0.3916666805744171,
+      "entrance_unknown": 0.70625,
+      "entrance_occupied": 0.20625,
+      "distance_cost": 0.7329965556653619,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_L2",
+      "score": -4.9128212945425025,
+      "free_ratio": 0.10416666666666667,
+      "occupied_ratio": 0.625,
+      "unknown_ratio": 0.2708333333333333,
+      "uncertainty_mean": 0.4793750047683716,
+      "occlusion_mean": 0.2958333194255829,
+      "entrance_unknown": 0.63125,
+      "entrance_occupied": 0.2125,
+      "distance_cost": 0.3583225665910466,
+      "preference_bonus": 0.0
+    },
+    {
+      "slot_id": "slot_R4",
+      "score": -5.061124368565354,
+      "free_ratio": 0.075,
+      "occupied_ratio": 0.5875,
+      "unknown_ratio": 0.3375,
+      "uncertainty_mean": 0.5110416412353516,
+      "occlusion_mean": 0.3499999940395355,
+      "entrance_unknown": 0.5375,
+      "entrance_occupied": 0.33125,
+      "distance_cost": 0.604509800388242,
+      "preference_bonus": 0.0
+    }
+  ],
+  "tool_results": [
+    {
+      "tool_name": "lidar_geometry_checker",
+      "region_id": "r0",
+      "confidence_delta": 0.8826128005981445,
+      "summary": "Local LiDAR evidence suggests this region is occupied.",
+      "updates": {
+        "point_count": 372,
+        "max_height": 0.9565320014953613,
+        "mean_height": 0.16753889620304108,
+        "occupied_confidence": 0.9326128005981446,
+        "free_confidence": 0.05,
+        "occupied_cells": [
+          [
+            28,
+            108
+          ],
+          [
+            28,
+            109
+          ],
+          [
+            28,
+            110
+          ],
+          [
+            28,
+            111
+          ],
+          [
+            28,
+            112
+          ]
+        ]
+      }
+    },
+    {
+      "tool_name": "image_crop_reinspect_placeholder",
+      "region_id": "r0",
+      "confidence_delta": 0.0,
+      "summary": "Visual crop re-inspection is a placeholder in MVP.",
+      "updates": {
+        "visual_confidence": 0.5
+      }
+    },
+    {
+      "tool_name": "lidar_geometry_checker",
+      "region_id": "r1",
+      "confidence_delta": 0.75,
+      "summary": "Local LiDAR evidence suggests this region is likely free.",
+      "updates": {
+        "point_count": 218,
+        "max_height": 0.11672526597976685,
+        "mean_height": -0.0023308636154979467,
+        "occupied_confidence": 0.1,
+        "free_confidence": 0.85,
+        "occupied_cells": []
+      }
+    },
+    {
+      "tool_name": "image_crop_reinspect_placeholder",
+      "region_id": "r1",
+      "confidence_delta": 0.0,
+      "summary": "Visual crop re-inspection is a placeholder in MVP.",
+      "updates": {
+        "visual_confidence": 0.5
+      }
+    },
+    {
+      "tool_name": "lidar_geometry_checker",
+      "region_id": "r2",
+      "confidence_delta": 0.75,
+      "summary": "Local LiDAR evidence suggests this region is likely free.",
+      "updates": {
+        "point_count": 252,
+        "max_height": 0.08504890650510788,
+        "mean_height": 6.9749730755575e-05,
+        "occupied_confidence": 0.1,
+        "free_confidence": 0.85,
+        "occupied_cells": []
+      }
+    },
+    {
+      "tool_name": "image_crop_reinspect_placeholder",
+      "region_id": "r2",
+      "confidence_delta": 0.0,
+      "summary": "Visual crop re-inspection is a placeholder in MVP.",
+      "updates": {
+        "visual_confidence": 0.5
+      }
+    }
+  ],
+  "metrics_summary": {
+    "false_free_before": 68,
+    "false_free_after": 64,
+    "occupied_iou_before": 0.662704309063893,
+    "occupied_iou_after": 0.6701337295690936
+  }
+}

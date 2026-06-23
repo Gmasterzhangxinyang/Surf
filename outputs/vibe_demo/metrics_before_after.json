@@ -1,0 +1,22 @@
+{
+  "sample_id": "vibe_demo_000",
+  "metrics": {
+    "false_free_before": 68,
+    "false_free_after": 64,
+    "false_free_reduction_percent": 5.882352941176471,
+    "false_occupied_before": 0,
+    "false_occupied_after": 0,
+    "unresolved_unknown_before": 21547,
+    "unresolved_unknown_after": 21232,
+    "unresolved_unknown_reduction_percent": 1.4619204529632897,
+    "occupied_iou_before": 0.662704309063893,
+    "occupied_iou_after": 0.6701337295690936,
+    "unknown_cells_before": 21547,
+    "unknown_cells_after": 21232,
+    "target_slot_unknown_ratio_before": 0.7916666666666666,
+    "target_slot_unknown_ratio_after": 0.6375,
+    "selected_region_error_overlap": 0.021651630811936155,
+    "num_selected_regions": 3,
+    "num_tool_calls": 6
+  }
+}
