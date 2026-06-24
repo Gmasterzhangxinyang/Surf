@@ -1,0 +1,40 @@
+services:
+  sim:
+    build:
+      context: .
+      args:
+        INSTALL_CARLA: "0"
+    command: >
+      bash -lc "python scripts/run_vibe_demo.py
+      && python scripts/create_quick_demo.py
+      && python scripts/create_ai_thinking_demo.py"
+    volumes:
+      - ./outputs:/app/outputs
+
+  serve:
+    build:
+      context: .
+      args:
+        INSTALL_CARLA: "0"
+    command: python -m http.server 8765
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./outputs:/app/outputs
+
+  carla-client:
+    platform: linux/amd64
+    build:
+      context: .
+      args:
+        INSTALL_CARLA: "1"
+        CARLA_VERSION: "${CARLA_VERSION:-0.9.15}"
+    command: >
+      python scripts/run_carla_demo.py
+      --config configs/carla_demo.yaml
+      --host ${CARLA_HOST:-124.220.5.97}
+      --port ${CARLA_PORT:-2000}
+    volumes:
+      - ./outputs:/app/outputs
+    profiles:
+      - carla

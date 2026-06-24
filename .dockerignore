@@ -1,0 +1,6 @@
+.git
+.DS_Store
+__pycache__/
+*.pyc
+outputs/.matplotlib/
+outputs/vibe_demo/ai_thinking_frames/

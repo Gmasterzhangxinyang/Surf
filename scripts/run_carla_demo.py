@@ -64,6 +64,8 @@ def _compute_belief_maps(occupancy, slots, grid_cfg, cfg):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run DASP-Park on a live CARLA LiDAR frame.")
     parser.add_argument("--config", default=str(ROOT / "configs" / "carla_demo.yaml"))
+    parser.add_argument("--host", default=None, help="Override carla.host from config.")
+    parser.add_argument("--port", type=int, default=None, help="Override carla.port from config.")
     parser.add_argument("--keep-world", action="store_true", help="Do not destroy spawned actors after capture.")
     return parser.parse_args()
 
@@ -71,6 +73,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     cfg = load_config(args.config)
+    if args.host is not None:
+        cfg["carla"]["host"] = args.host
+    if args.port is not None:
+        cfg["carla"]["port"] = args.port
     out_dir = ROOT / cfg["output_dir"]
     if out_dir.exists():
         shutil.rmtree(out_dir)

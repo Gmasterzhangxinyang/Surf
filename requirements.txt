@@ -2,3 +2,5 @@ numpy
 matplotlib
 pyyaml
 opencv-python
+pillow
+reportlab

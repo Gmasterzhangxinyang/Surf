@@ -16,6 +16,53 @@ python scripts/run_vibe_demo.py
 CARLA is optional and version-sensitive. Keep the synthetic demo as the fast
 unit test, then run CARLA when a CARLA server is already available.
 
+## Docker Simulation
+
+Run the local DASP-Park simulator in Docker:
+
+```bash
+docker compose up --build sim
+docker compose up serve
+```
+
+Open:
+
+```text
+http://127.0.0.1:8765/outputs/vibe_demo/
+```
+
+For CARLA, run the CARLA server on the Ubuntu GPU machine and run the
+DASP-Park CARLA client from this machine.
+
+On Ubuntu `124.220.5.97`:
+
+```bash
+docker compose -f docker-compose.carla-server.yml up
+```
+
+On this Mac:
+
+```bash
+cp .env.example .env
+docker compose --profile carla up --build carla-client
+```
+
+Default `.env.example`:
+
+```text
+CARLA_HOST=124.220.5.97
+CARLA_PORT=2000
+CARLA_VERSION=0.9.15
+```
+
+Make sure the Ubuntu firewall/security group allows CARLA ports:
+
+```text
+2000/tcp
+2001/tcp
+2002/tcp
+```
+
 Start CARLA first on Ubuntu/Windows or a remote GPU machine:
 
 ```bash
