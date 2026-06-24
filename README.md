@@ -11,6 +11,55 @@ pip install -r requirements.txt
 python scripts/run_vibe_demo.py
 ```
 
+## CARLA Demo
+
+CARLA is optional and version-sensitive. Keep the synthetic demo as the fast
+unit test, then run CARLA when a CARLA server is already available.
+
+Start CARLA first on Ubuntu/Windows or a remote GPU machine:
+
+```bash
+./CarlaUE4.sh -quality-level=Low
+```
+
+Install the matching CARLA Python API for that server version. For example:
+
+```bash
+python3 -m pip install carla==0.9.16
+```
+
+Then run:
+
+```bash
+python scripts/run_carla_demo.py --config configs/carla_demo.yaml
+```
+
+The CARLA script currently captures a live LiDAR frame, converts it into the
+same DASP-Park occupancy belief, scores the known slot map, and applies the
+deterministic final decision gate:
+
+```text
+COMMIT_SLOT
+CONTINUE_PERCEPTION
+DRIVE_FORWARD_EXPLORE
+```
+
+Outputs are written to:
+
+```text
+outputs/carla_demo/
+```
+
+Important CARLA config fields:
+
+```text
+carla.host / carla.port       CARLA server address
+carla.map                     CARLA map to load
+carla.ego_spawn               ego vehicle pose
+carla.lidar                   LiDAR mount and attributes
+slot_map.slots                known parking slot polygons in ego coordinates
+```
+
 ## Outputs
 
 The demo writes results to:
@@ -47,8 +96,10 @@ known slot map + sparse LiDAR
 → AI chooses a perception query and an allowed tool
 → local tool updates occupancy belief
 → ranking is recomputed only to test belief stability
-→ if top3 is stable, stop querying
-→ if top3 changes, AI queries competing regions, at most two times
+→ final deterministic gate checks stability, margin, occupancy, unknown, occlusion, and entrance risk
+→ if checks pass, commit the slot
+→ if checks fail but budget remains, continue perception
+→ if checks still fail after bounded queries, drive forward for a new viewpoint
 ```
 
 AI does not create coordinates, does not modify occupancy, and does not read ground truth. It only selects perception-query `action_id` and `tool_ids` from rule-generated candidates. The validator rejects anything outside the legal action/tool set.
@@ -67,8 +118,10 @@ This demo does not claim real-world parking performance. It only demonstrates th
 - Occupancy / unknown / occlusion / uncertainty maps.
 - Decision-aware active perception.
 - AI-selected legal perception query and tool plans.
+- CARLA LiDAR adapter for live simulation input.
 - Top-3 ranking stability as a downstream evaluation signal.
 - Bounded competitor-region querying when belief is unstable.
+- Final deterministic output: `COMMIT_SLOT`, `CONTINUE_PERCEPTION`, or `DRIVE_FORWARD_EXPLORE`.
 - Local tool-based belief update.
 - Before/after error maps and metrics.
 - Clear visual explanation through `15_effectiveness_panel.png`.

@@ -339,6 +339,7 @@ def build_agent_reasoning_trace(
     tool_results: list[ToolResult],
     metrics: dict,
     rounds: list[dict] | None = None,
+    final_decision: dict | None = None,
 ) -> dict:
     """Build an explicit, human-readable reasoning trace for the active perception agent."""
     best_score = slot_scores[0] if slot_scores else {}
@@ -393,6 +394,7 @@ def build_agent_reasoning_trace(
         },
         "actions": actions,
         "rounds": rounds or [],
+        "final_parking_decision": final_decision or {},
         "observed_improvement": {
             "occupied_iou_before": metrics.get("occupied_iou_before"),
             "occupied_iou_after": metrics.get("occupied_iou_after"),

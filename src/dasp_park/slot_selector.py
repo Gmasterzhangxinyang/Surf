@@ -46,6 +46,7 @@ def score_candidate_slot(
     occlusion_mean = float(occlusion[mask].mean()) if mask.any() else 1.0
     entrance_unknown = float((((occupancy == UNKNOWN) | (occupancy == OCCLUDED_UNKNOWN)) & entrance).sum() / entrance_total)
     entrance_occupied = float(((occupancy == OCCUPIED) & entrance).sum() / entrance_total)
+    entrance_free = float(((occupancy == FREE) & entrance).sum() / entrance_total)
 
     center = slot.metadata.get("center", [20.0, 0.0])
     distance_cost = float(np.hypot(center[0], center[1]) / 45.0)
@@ -72,6 +73,7 @@ def score_candidate_slot(
         "occlusion_mean": occlusion_mean,
         "entrance_unknown": entrance_unknown,
         "entrance_occupied": entrance_occupied,
+        "entrance_free": entrance_free,
         "distance_cost": distance_cost,
         "preference_bonus": preference_bonus,
     }

@@ -40,6 +40,7 @@
         "occlusion_mean": 0.0,
         "entrance_unknown": 0.775,
         "entrance_occupied": 0.0,
+        "entrance_free": 0.225,
         "distance_cost": 0.2514157444218836,
         "preference_bonus": 0.0
       }
@@ -168,6 +169,28 @@
           "lidar_geometry_checker",
           "image_crop_reinspect_placeholder"
         ],
+        "tool_call_reasons": [
+          {
+            "tool_name": "lidar_geometry_checker",
+            "region_id": "r0",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Is the target slot or entrance clear enough to trust?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          },
+          {
+            "tool_name": "image_crop_reinspect_placeholder",
+            "region_id": "r0",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Is the target slot or entrance clear enough to trust?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          }
+        ],
         "phase": "verify_top1",
         "top3_before": [
           "slot_L1",
@@ -180,6 +203,37 @@
           "slot_R3"
         ],
         "ranking_changed": true,
+        "parking_decision_after_round": {
+          "action": "CONTINUE_PERCEPTION",
+          "slot_id": null,
+          "reason": "more bounded perception is allowed before committing or driving forward",
+          "checks": {
+            "top1_slot": "slot_R1",
+            "top1_stable_rounds": 1,
+            "required_top1_stable_rounds": 2,
+            "score_margin": 0.15005210508902878,
+            "required_score_margin": 0.08,
+            "occupied_ratio": 0.0,
+            "max_occupied_ratio": 0.05,
+            "unknown_ratio": 0.7916666666666666,
+            "max_unknown_ratio": 0.3,
+            "occlusion_mean": 0.0,
+            "max_occlusion_mean": 0.25,
+            "entrance_unknown": 0.775,
+            "max_entrance_unknown": 0.3,
+            "entrance_occupied": 0.0,
+            "max_entrance_occupied": 0.02,
+            "rounds_completed": 1,
+            "max_rounds": 3,
+            "competitor_explorations": 0,
+            "max_competitor_explorations": 2,
+            "failed_checks": [
+              "top1 is not stable enough",
+              "top1 still has too much unknown area",
+              "slot entrance is not sufficiently observed"
+            ]
+          }
+        },
         "target_slot_unknown_ratio_after": 0.7,
         "target_slot_after": "slot_R1",
         "switched_target": true,
@@ -313,6 +367,28 @@
           "lidar_geometry_checker",
           "image_crop_reinspect_placeholder"
         ],
+        "tool_call_reasons": [
+          {
+            "tool_name": "lidar_geometry_checker",
+            "region_id": "r1",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Could competing slot slot_R3 be safer than the current target?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          },
+          {
+            "tool_name": "image_crop_reinspect_placeholder",
+            "region_id": "r1",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Could competing slot slot_R3 be safer than the current target?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          }
+        ],
         "phase": "explore_competitor",
         "top3_before": [
           "slot_R1",
@@ -325,6 +401,37 @@
           "slot_R2"
         ],
         "ranking_changed": true,
+        "parking_decision_after_round": {
+          "action": "CONTINUE_PERCEPTION",
+          "slot_id": null,
+          "reason": "more bounded perception is allowed before committing or driving forward",
+          "checks": {
+            "top1_slot": "slot_R3",
+            "top1_stable_rounds": 1,
+            "required_top1_stable_rounds": 2,
+            "score_margin": 0.18622267079133326,
+            "required_score_margin": 0.08,
+            "occupied_ratio": 0.0,
+            "max_occupied_ratio": 0.05,
+            "unknown_ratio": 0.6666666666666666,
+            "max_unknown_ratio": 0.3,
+            "occlusion_mean": 0.0,
+            "max_occlusion_mean": 0.25,
+            "entrance_unknown": 0.91875,
+            "max_entrance_unknown": 0.3,
+            "entrance_occupied": 0.0,
+            "max_entrance_occupied": 0.02,
+            "rounds_completed": 2,
+            "max_rounds": 3,
+            "competitor_explorations": 1,
+            "max_competitor_explorations": 2,
+            "failed_checks": [
+              "top1 is not stable enough",
+              "top1 still has too much unknown area",
+              "slot entrance is not sufficiently observed"
+            ]
+          }
+        },
         "target_slot_unknown_ratio_after": 0.7916666666666666,
         "target_slot_after": "slot_R3",
         "switched_target": true,
@@ -459,6 +566,28 @@
           "lidar_geometry_checker",
           "image_crop_reinspect_placeholder"
         ],
+        "tool_call_reasons": [
+          {
+            "tool_name": "lidar_geometry_checker",
+            "region_id": "r2",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Could competing slot slot_R1 be safer than the current target?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          },
+          {
+            "tool_name": "image_crop_reinspect_placeholder",
+            "region_id": "r2",
+            "reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+            "active_question": "Could competing slot slot_R1 be safer than the current target?",
+            "allowed_tools": [
+              "lidar_geometry_checker",
+              "image_crop_reinspect_placeholder"
+            ]
+          }
+        ],
         "phase": "explore_competitor",
         "top3_before": [
           "slot_R3",
@@ -471,13 +600,75 @@
           "slot_R2"
         ],
         "ranking_changed": true,
+        "parking_decision_after_round": {
+          "action": "DRIVE_FORWARD_EXPLORE",
+          "slot_id": null,
+          "reason": "current viewpoint is insufficient after bounded perception; drive forward for a new view",
+          "checks": {
+            "top1_slot": "slot_R1",
+            "top1_stable_rounds": 1,
+            "required_top1_stable_rounds": 2,
+            "score_margin": 0.13868358401677466,
+            "required_score_margin": 0.08,
+            "occupied_ratio": 0.0,
+            "max_occupied_ratio": 0.05,
+            "unknown_ratio": 0.6375,
+            "max_unknown_ratio": 0.3,
+            "occlusion_mean": 0.0,
+            "max_occlusion_mean": 0.25,
+            "entrance_unknown": 0.775,
+            "max_entrance_unknown": 0.3,
+            "entrance_occupied": 0.0,
+            "max_entrance_occupied": 0.02,
+            "rounds_completed": 3,
+            "max_rounds": 3,
+            "competitor_explorations": 2,
+            "max_competitor_explorations": 2,
+            "failed_checks": [
+              "top1 is not stable enough",
+              "top1 still has too much unknown area",
+              "slot entrance is not sufficiently observed"
+            ]
+          }
+        },
         "target_slot_unknown_ratio_after": 0.6666666666666666,
         "target_slot_after": "slot_R1",
         "switched_target": true,
-        "stop_reason": "max_competitor_explorations_reached",
+        "stop_reason": "DRIVE_FORWARD_EXPLORE",
         "stop_after_round": true
       }
     ],
+    "final_parking_decision": {
+      "action": "DRIVE_FORWARD_EXPLORE",
+      "slot_id": null,
+      "reason": "current viewpoint is insufficient after bounded perception; drive forward for a new view",
+      "checks": {
+        "top1_slot": "slot_R1",
+        "top1_stable_rounds": 1,
+        "required_top1_stable_rounds": 2,
+        "score_margin": 0.13868358401677466,
+        "required_score_margin": 0.08,
+        "occupied_ratio": 0.0,
+        "max_occupied_ratio": 0.05,
+        "unknown_ratio": 0.6375,
+        "max_unknown_ratio": 0.3,
+        "occlusion_mean": 0.0,
+        "max_occlusion_mean": 0.25,
+        "entrance_unknown": 0.775,
+        "max_entrance_unknown": 0.3,
+        "entrance_occupied": 0.0,
+        "max_entrance_occupied": 0.02,
+        "rounds_completed": 3,
+        "max_rounds": 3,
+        "competitor_explorations": 2,
+        "max_competitor_explorations": 2,
+        "failed_checks": [
+          "top1 is not stable enough",
+          "top1 still has too much unknown area",
+          "slot entrance is not sufficiently observed"
+        ]
+      }
+    },
     "observed_improvement": {
       "occupied_iou_before": 0.662704309063893,
       "occupied_iou_after": 0.6701337295690936,
@@ -632,6 +823,37 @@
     "slot_id": "slot_R1",
     "note": "Selected from known candidate slot map using current belief, not ground truth."
   },
+  "final_parking_decision": {
+    "action": "DRIVE_FORWARD_EXPLORE",
+    "slot_id": null,
+    "reason": "current viewpoint is insufficient after bounded perception; drive forward for a new view",
+    "checks": {
+      "top1_slot": "slot_R1",
+      "top1_stable_rounds": 1,
+      "required_top1_stable_rounds": 2,
+      "score_margin": 0.13868358401677466,
+      "required_score_margin": 0.08,
+      "occupied_ratio": 0.0,
+      "max_occupied_ratio": 0.05,
+      "unknown_ratio": 0.6375,
+      "max_unknown_ratio": 0.3,
+      "occlusion_mean": 0.0,
+      "max_occlusion_mean": 0.25,
+      "entrance_unknown": 0.775,
+      "max_entrance_unknown": 0.3,
+      "entrance_occupied": 0.0,
+      "max_entrance_occupied": 0.02,
+      "rounds_completed": 3,
+      "max_rounds": 3,
+      "competitor_explorations": 2,
+      "max_competitor_explorations": 2,
+      "failed_checks": [
+        "top1 is not stable enough",
+        "top1 still has too much unknown area",
+        "slot entrance is not sufficiently observed"
+      ]
+    }
+  },
   "slot_scores": [
     {
       "slot_id": "slot_R1",
@@ -643,6 +865,7 @@
       "occlusion_mean": 0.0,
       "entrance_unknown": 0.775,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.225,
       "distance_cost": 0.2514157444218836,
       "preference_bonus": 0.0
     },
@@ -656,6 +879,7 @@
       "occlusion_mean": 0.0,
       "entrance_unknown": 0.91875,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.08125,
       "distance_cost": 0.47868131618973364,
       "preference_bonus": 0.0
     },
@@ -669,6 +893,7 @@
       "occlusion_mean": 0.0,
       "entrance_unknown": 0.83125,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.16875,
       "distance_cost": 0.3583225665910466,
       "preference_bonus": 0.0
     },
@@ -682,6 +907,7 @@
       "occlusion_mean": 0.20000000298023224,
       "entrance_unknown": 0.76875,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.23125,
       "distance_cost": 0.2514157444218836,
       "preference_bonus": 0.0
     },
@@ -695,6 +921,7 @@
       "occlusion_mean": 0.0,
       "entrance_unknown": 0.8625,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.1375,
       "distance_cost": 0.604509800388242,
       "preference_bonus": 0.0
     },
@@ -708,6 +935,7 @@
       "occlusion_mean": 0.4625000059604645,
       "entrance_unknown": 0.825,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.175,
       "distance_cost": 0.47868131618973364,
       "preference_bonus": 0.0
     },
@@ -721,6 +949,7 @@
       "occlusion_mean": 0.7166666388511658,
       "entrance_unknown": 0.90625,
       "entrance_occupied": 0.0,
+      "entrance_free": 0.09375,
       "distance_cost": 0.7329965556653619,
       "preference_bonus": 0.0
     },
@@ -734,6 +963,7 @@
       "occlusion_mean": 0.3916666805744171,
       "entrance_unknown": 0.70625,
       "entrance_occupied": 0.20625,
+      "entrance_free": 0.0875,
       "distance_cost": 0.7329965556653619,
       "preference_bonus": 0.0
     },
@@ -747,6 +977,7 @@
       "occlusion_mean": 0.2958333194255829,
       "entrance_unknown": 0.63125,
       "entrance_occupied": 0.2125,
+      "entrance_free": 0.15625,
       "distance_cost": 0.3583225665910466,
       "preference_bonus": 0.0
     },
@@ -760,6 +991,7 @@
       "occlusion_mean": 0.3499999940395355,
       "entrance_unknown": 0.5375,
       "entrance_occupied": 0.33125,
+      "entrance_free": 0.13125,
       "distance_cost": 0.604509800388242,
       "preference_bonus": 0.0
     }
@@ -798,6 +1030,11 @@
             112
           ]
         ]
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Is the target slot or entrance clear enough to trust?",
+        "validated_action_id": "a0"
       }
     },
     {
@@ -807,6 +1044,11 @@
       "summary": "Visual crop re-inspection is a placeholder in MVP.",
       "updates": {
         "visual_confidence": 0.5
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Is the target slot or entrance clear enough to trust?",
+        "validated_action_id": "a0"
       }
     },
     {
@@ -821,6 +1063,11 @@
         "occupied_confidence": 0.1,
         "free_confidence": 0.85,
         "occupied_cells": []
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Could competing slot slot_R3 be safer than the current target?",
+        "validated_action_id": "a0"
       }
     },
     {
@@ -830,6 +1077,11 @@
       "summary": "Visual crop re-inspection is a placeholder in MVP.",
       "updates": {
         "visual_confidence": 0.5
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Could competing slot slot_R3 be safer than the current target?",
+        "validated_action_id": "a0"
       }
     },
     {
@@ -844,6 +1096,11 @@
         "occupied_confidence": 0.1,
         "free_confidence": 0.85,
         "occupied_cells": []
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Could competing slot slot_R1 be safer than the current target?",
+        "validated_action_id": "a0"
       }
     },
     {
@@ -853,6 +1110,11 @@
       "summary": "Visual crop re-inspection is a placeholder in MVP.",
       "updates": {
         "visual_confidence": 0.5
+      },
+      "metadata": {
+        "tool_call_reason": "Stable fallback chooses the first staged candidate and its safest allowed tool set.",
+        "active_question": "Could competing slot slot_R1 be safer than the current target?",
+        "validated_action_id": "a0"
       }
     }
   ],

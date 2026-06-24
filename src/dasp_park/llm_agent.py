@@ -9,12 +9,14 @@ def build_llm_agent_context(
     agent_reasoning: dict,
     target_slot_history: list[dict],
     metrics: dict,
+    final_decision: dict | None = None,
 ) -> dict:
     """Build compact context for the optional LLM briefing layer."""
     rounds = agent_reasoning.get("rounds", [])
     return {
         "agent_role": "LLM briefing layer. It explains and critiques the deterministic active perception agent; it does not control occupancy updates.",
         "safety_boundary": "The LLM must not claim it used ground truth, controlled the vehicle, or directly modified occupancy.",
+        "final_parking_decision": final_decision or {},
         "target_slot_history": target_slot_history,
         "rounds": [
             {

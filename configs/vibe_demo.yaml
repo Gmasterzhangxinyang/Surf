@@ -62,6 +62,14 @@ agent:
   region_size_cells: 14
   nms_radius_cells: 18
   stop_target_unknown_ratio: 0.30
+  final_decision:
+    min_top1_stable_rounds: 2
+    min_score_margin: 0.08
+    max_occupied_ratio: 0.05
+    max_unknown_ratio: 0.30
+    max_occlusion_mean: 0.25
+    max_entrance_unknown: 0.30
+    max_entrance_occupied: 0.02
   weights:
     uncertainty: 0.35
     occlusion: 0.30

@@ -19,6 +19,11 @@ from dasp_park.agent import (
     select_top_regions,
 )
 from dasp_park.config import ensure_output_dir, load_config
+from dasp_park.decision import (
+    COMMIT_SLOT,
+    DRIVE_FORWARD_EXPLORE,
+    evaluate_parking_decision,
+)
 from dasp_park.diagnostics import (
     compute_decision_impact_map,
     compute_obstacle_boundary_map,
@@ -87,6 +92,7 @@ def _tool_to_trace(result):
         "confidence_delta": float(result.confidence_delta),
         "summary": result.summary,
         "updates": _to_jsonable(result.updates),
+        "metadata": _to_jsonable(result.metadata),
     }
 
 
@@ -193,6 +199,8 @@ def main():
     max_competitor_explorations = cfg["agent"].get("max_competitor_explorations", 2)
     phase = "verify_top1"
     competitor_explorations = 0
+    top1_history = [slot_scores[0]["slot_id"]]
+    final_decision = None
 
     for round_idx in range(max_rounds):
         remaining = top_k_total - len(selected_regions)
@@ -286,25 +294,44 @@ def main():
         selected_plan = validate_policy_plan(ai_policy_advice, candidate_actions, max_actions=max_actions_this_round)
         selected_action_ids = [item["action_id"] for item in selected_plan]
         action_to_region = {action["action_id"]: region for action, region in zip(candidate_actions, candidate_regions)}
+        action_to_action = {action["action_id"]: action for action in candidate_actions}
         action_to_plan = {item["action_id"]: item for item in selected_plan}
         new_regions = [action_to_region[action_id] for action_id in selected_action_ids]
 
         round_tool_results = []
+        tool_call_reasons = []
         for region in new_regions:
+            region_action_id = next(
+                action_id for action_id, candidate_region in action_to_region.items() if candidate_region is region
+            )
+            action = action_to_action.get(region_action_id, {})
             plan_item = action_to_plan.get(
-                next(action_id for action_id, candidate_region in action_to_region.items() if candidate_region is region),
+                region_action_id,
                 {},
             )
-            round_tool_results.extend(
-                route_and_run_tools(
-                    region,
-                    sample.lidar_points_full,
-                    occupancy_current,
-                    round_maps["occlusion"],
-                    grid_cfg,
-                    selected_tool_names=plan_item.get("tool_ids"),
-                )
+            plan_reason = plan_item.get("reason") or action.get("why_selected") or action.get("active_question", "")
+            region_results = route_and_run_tools(
+                region,
+                sample.lidar_points_full,
+                occupancy_current,
+                round_maps["occlusion"],
+                grid_cfg,
+                selected_tool_names=plan_item.get("tool_ids"),
             )
+            for result in region_results:
+                result.metadata["tool_call_reason"] = plan_reason
+                result.metadata["active_question"] = action.get("active_question", "")
+                result.metadata["validated_action_id"] = region_action_id
+                tool_call_reasons.append(
+                    {
+                        "tool_name": result.tool_name,
+                        "region_id": result.region_id,
+                        "reason": plan_reason,
+                        "active_question": action.get("active_question", ""),
+                        "allowed_tools": action.get("allowed_tools", []),
+                    }
+                )
+            round_tool_results.extend(region_results)
 
         occupancy_next = update_occupancy_with_tool_results(occupancy_current, new_regions, round_tool_results, cfg)
         target_unknown_after_round = target_slot_unknown_ratio(occupancy_next, sample.target_slot_mask)
@@ -319,22 +346,16 @@ def main():
         )
         top3_after = [item["slot_id"] for item in updated_slot_scores[:3]]
         ranking_changed = top3_after != top3_before
-        stop_after_round = False
-        stop_reason = ""
-        if not ranking_changed:
-            stop_after_round = True
-            stop_reason = "top3_ranking_stable"
-        elif current_phase == "verify_top1":
+        top1_history.append(updated_slot_scores[0]["slot_id"])
+        if ranking_changed and current_phase == "verify_top1":
             phase = "explore_competitor"
             stop_reason = "top3_changed_after_top1_verification"
-        else:
+        elif ranking_changed:
             competitor_explorations += 1
-            if competitor_explorations >= max_competitor_explorations:
-                stop_after_round = True
-                stop_reason = "max_competitor_explorations_reached"
-            else:
-                phase = "explore_competitor"
-                stop_reason = "top3_changed_after_competitor_exploration"
+            phase = "explore_competitor"
+            stop_reason = "top3_changed_after_competitor_exploration"
+        else:
+            stop_reason = "top3_ranking_stable_but_final_checks_required"
         switched_target = updated_slot.slot_id != previous_slot_id
         if switched_target:
             selected_slot = updated_slot
@@ -351,6 +372,18 @@ def main():
             slot_scores = updated_slot_scores
         selected_regions.extend(new_regions)
         tool_results.extend(round_tool_results)
+        final_decision = evaluate_parking_decision(
+            slot_scores,
+            top1_history,
+            rounds_completed=round_idx + 1,
+            max_rounds=max_rounds,
+            competitor_explorations=competitor_explorations,
+            max_competitor_explorations=max_competitor_explorations,
+            cfg=cfg,
+        )
+        stop_after_round = final_decision.action in {COMMIT_SLOT, DRIVE_FORWARD_EXPLORE}
+        if stop_after_round:
+            stop_reason = final_decision.action
         agent_rounds.append(
             {
                 "round": round_idx + 1,
@@ -368,10 +401,12 @@ def main():
                     region.metadata.get("active_question", "What local evidence is missing?") for region in new_regions
                 ],
                 "tool_calls": [result.tool_name for result in round_tool_results],
+                "tool_call_reasons": tool_call_reasons,
                 "phase": current_phase,
                 "top3_before": top3_before,
                 "top3_after": top3_after,
                 "ranking_changed": ranking_changed,
+                "parking_decision_after_round": final_decision.to_dict(),
                 "target_slot_unknown_ratio_after": target_unknown_after_round,
                 "target_slot_after": selected_slot.slot_id,
                 "switched_target": switched_target,
@@ -382,6 +417,17 @@ def main():
         occupancy_current = occupancy_next
         if stop_after_round or len(selected_regions) >= top_k_total:
             break
+
+    if final_decision is None:
+        final_decision = evaluate_parking_decision(
+            slot_scores,
+            top1_history,
+            rounds_completed=len(agent_rounds),
+            max_rounds=max_rounds,
+            competitor_explorations=competitor_explorations,
+            max_competitor_explorations=max_competitor_explorations,
+            cfg=cfg,
+        )
 
     print(f"[DASP-Park] Completed {len(agent_rounds)} active perception rounds.")
     print(f"[DASP-Park] Selected {len(selected_regions)} high-priority regions.")
@@ -405,6 +451,7 @@ def main():
         tool_results,
         metrics,
         rounds=agent_rounds,
+        final_decision=final_decision.to_dict(),
     )
     print("[DASP-Park] Computed before/after metrics.")
 
@@ -450,7 +497,7 @@ def main():
     llm_cfg = cfg.get("llm_agent", {})
     ai_briefing = None
     if llm_cfg.get("enabled", False):
-        llm_context = build_llm_agent_context(agent_reasoning, target_slot_history, metrics)
+        llm_context = build_llm_agent_context(agent_reasoning, target_slot_history, metrics, final_decision.to_dict())
         ai_briefing = call_openai_briefing(llm_context, llm_cfg)
         with open(out_dir / llm_cfg.get("output_json", "ai_agent_briefing.json"), "w", encoding="utf-8") as f:
             json.dump(ai_briefing, f, indent=2, ensure_ascii=False)
@@ -470,6 +517,7 @@ def main():
             "slot_id": selected_slot.slot_id,
             "note": "Selected from known candidate slot map using current belief, not ground truth.",
         },
+        "final_parking_decision": final_decision.to_dict(),
         "slot_scores": slot_scores,
         "tool_results": [_tool_to_trace(r) for r in tool_results],
         "metrics_summary": {
