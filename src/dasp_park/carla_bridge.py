@@ -18,6 +18,7 @@ class CarlaActors:
     lidar: Any
     camera: Any | None
     parked_vehicles: list[Any]
+    static_obstacles: list[Any]
     lidar_queue: queue.Queue
 
 
@@ -94,7 +95,7 @@ def _choose_blueprint(blueprint_library, filter_name: str, preferred_id: str | N
 
 
 def spawn_carla_scene(world, cfg: dict) -> CarlaActors:
-    """Spawn ego, LiDAR, optional camera, and parked vehicles from config."""
+    """Spawn ego, LiDAR, optional camera, parked vehicles, and static obstacles."""
     carla = import_carla()
     bp_lib = world.get_blueprint_library()
     scene_cfg = cfg["carla"]
@@ -112,6 +113,17 @@ def spawn_carla_scene(world, cfg: dict) -> CarlaActors:
         if actor is not None:
             actor.set_autopilot(False)
             parked_vehicles.append(actor)
+
+    static_obstacles = []
+    for item in scene_cfg.get("static_obstacles", []):
+        bp = _choose_blueprint(
+            bp_lib,
+            item.get("blueprint_filter", "static.prop.*"),
+            item.get("blueprint"),
+        )
+        actor = world.try_spawn_actor(bp, make_transform(item["transform"]))
+        if actor is not None:
+            static_obstacles.append(actor)
 
     lidar_cfg = scene_cfg["lidar"]
     lidar_bp = bp_lib.find("sensor.lidar.ray_cast")
@@ -144,13 +156,14 @@ def spawn_carla_scene(world, cfg: dict) -> CarlaActors:
         lidar=lidar,
         camera=camera,
         parked_vehicles=parked_vehicles,
+        static_obstacles=static_obstacles,
         lidar_queue=lidar_queue,
     )
 
 
 def destroy_carla_actors(actors: CarlaActors) -> None:
     """Destroy actors created for the demo."""
-    for actor in [actors.camera, actors.lidar, *actors.parked_vehicles, actors.ego]:
+    for actor in [actors.camera, actors.lidar, *actors.static_obstacles, *actors.parked_vehicles, actors.ego]:
         if actor is not None:
             actor.destroy()
 

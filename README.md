@@ -57,7 +57,18 @@ carla.host / carla.port       CARLA server address
 carla.map                     CARLA map to load
 carla.ego_spawn               ego vehicle pose
 carla.lidar                   LiDAR mount and attributes
+carla.parked_vehicles         occupied slots and aisle occluders
+carla.static_obstacles        low/small objects such as cones or boxes
 slot_map.slots                known parking slot polygons in ego coordinates
+```
+
+The default `configs/carla_demo.yaml` uses a more complex parking setup:
+
+```text
+10 known parking slots
+multiple occupied slots
+an aisle occluder vehicle
+low static obstacles that can create sparse obstacle evidence
 ```
 
 ## Outputs

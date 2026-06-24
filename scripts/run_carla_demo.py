@@ -148,6 +148,11 @@ def main() -> None:
                 "CARLA is used for sensor capture. This script converts one LiDAR observation into "
                 "DASP-Park occupancy belief and applies deterministic slot decision gates."
             ),
+            "scene_complexity": {
+                "num_known_slots": len(slots),
+                "num_configured_parked_vehicles": len(carla_cfg.get("parked_vehicles", [])),
+                "num_configured_static_obstacles": len(carla_cfg.get("static_obstacles", [])),
+            },
             "lidar_points": int(points.shape[0]),
             "selected_slot": selected_slot.slot_id,
             "slot_scores": slot_scores,
