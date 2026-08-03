@@ -1,0 +1,15 @@
+{
+  "schema_version": "parking-slot-agent-v2-openai-config/1.0",
+  "provider": "openai",
+  "api": "responses",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "image_detail": "original",
+  "store": false,
+  "max_output_tokens": 2048,
+  "timeout_seconds": 120.0,
+  "max_retries": 2,
+  "max_image_bytes": 25165824,
+  "api_key_file": null,
+  "sdk_requirements": "configs/openai_vlm_requirements.txt"
+}

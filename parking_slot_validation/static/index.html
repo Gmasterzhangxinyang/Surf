@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>车位 Occupied / Free 人工验真</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#e5e7eb;background:#07111f}*{box-sizing:border-box}
+    body{margin:0}.top{position:sticky;top:0;z-index:5;background:#0b1728;border-bottom:1px solid #24334a;padding:12px 18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+    h1{font-size:19px;margin:0}.pill{background:#13243a;padding:7px 11px;border-radius:999px;color:#bfdbfe}.grow{flex:1}.bar{height:7px;background:#26364b;border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:#22c55e;width:0}
+    main{max-width:1540px;margin:auto;padding:18px}.controls{display:flex;gap:9px;align-items:center;margin-bottom:13px}.controls button,.controls select{background:#15263b;color:#e5e7eb;border:1px solid #334a67;border-radius:8px;padding:9px 13px}.controls button{cursor:pointer}
+    .case{background:#0d1a2b;border:1px solid #263950;border-radius:14px;padding:16px}.case-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.case-head h2{margin:0}.status{padding:5px 9px;border-radius:7px;background:#172a42}.warning{color:#fbbf24}
+    .layout{display:grid;grid-template-columns:minmax(250px,330px) 1fr;gap:14px;margin-top:14px}.map img{width:100%;border-radius:9px;border:1px solid #334a67;background:white}.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:10px}.frame{background:#081321;border:1px solid #2a3e57;border-radius:9px;overflow:hidden}.frame img{width:100%;display:block;cursor:zoom-in}.meta{padding:7px;font-size:12px;color:#a8bad0}
+    .labeler{position:sticky;bottom:0;margin-top:16px;background:#0b1728eF;border:1px solid #334a67;border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.labeler button{font-size:17px;font-weight:700;border:0;border-radius:9px;padding:13px 22px;cursor:pointer}.occ{background:#ef4444;color:white}.free{background:#22c55e;color:#052e16}.unable{background:#f59e0b;color:#261400}.reason{background:#15263b;color:white;border:1px solid #4a607c;border-radius:8px;padding:10px;display:none}.saved{color:#86efac}.audit{margin-top:13px;background:#111f32;border-radius:8px;padding:10px}.audit.hidden{display:none}.comparison{font-weight:700}
+    dialog{background:#07111f;color:white;border:1px solid #506783;border-radius:12px;padding:10px;max-width:94vw}dialog img{max-width:92vw;max-height:90vh}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.labeler{position:static}}
+  </style>
+</head>
+<body>
+  <header class="top"><h1>车位人工验真</h1><span class="pill" id="progressText">加载中</span><div class="grow"><div class="bar"><i id="bar"></i></div></div><span class="pill" id="metrics"></span></header>
+  <main>
+    <div class="controls"><button id="prev">← 上一个</button><button id="next">下一个 →</button><select id="filter"><option value="all">全部</option><option value="unlabeled">未标注</option><option value="occupied">已标 Occupied</option><option value="free">已标 Free</option><option value="unobservable">无法判断</option></select><span id="position"></span><a href="/api/export.json"><button>导出 JSON</button></a><a href="/api/export.csv"><button>导出 CSV</button></a></div>
+    <section class="case">
+      <div class="case-head"><h2 id="slot">—</h2><span class="status" id="reviewStatus"></span><span class="warning" id="reasons"></span></div>
+      <div class="layout"><div class="map"><img id="map" alt="车位地图"></div><div class="frames" id="frames"></div></div>
+      <div class="audit hidden" id="audit"></div>
+      <div class="labeler"><b>这个目标车位真实状态：</b><button class="occ" data-label="occupied">1 · Occupied</button><button class="free" data-label="free">2 · Free</button><button class="unable" data-label="unobservable">3 · 无法判断</button><select class="reason" id="reason"><option value="">选择原因</option><option value="outside_fov">未进入视野</option><option value="occluded">被遮挡</option><option value="bad_projection">投影错误</option><option value="temporal_conflict">前后状态冲突</option><option value="missing_image">图片缺失</option><option value="unclear">看不清</option></select><span class="saved" id="saved"></span></div>
+    </section>
+  </main>
+  <dialog id="zoom"><img id="zoomImg"><form method="dialog"><button>关闭</button></form></dialog>
+<script>
+let cases=[], visible=[], index=0, summary={};
+const $=id=>document.getElementById(id); const pct=v=>v==null?'—':(100*v).toFixed(1)+'%';
+async function load(){const [c,s]=await Promise.all([fetch('/api/cases').then(r=>r.json()),fetch('/api/summary').then(r=>r.json())]);cases=c.cases;summary=s;applyFilter();renderStats();}
+function applyFilter(){const f=$('filter').value;visible=cases.filter(c=>f==='all'||(f==='unlabeled'&&!c.human_label)||(c.human_label&&c.human_label.human_label===f));index=Math.min(index,Math.max(0,visible.length-1));render();}
+function renderStats(){const n=summary.labeled_count||0,t=summary.total_case_count||cases.length;$('progressText').textContent=`已标 ${n} / ${t}`;$('bar').style.width=(t?100*n/t:0)+'%';$('metrics').textContent=`可验证覆盖 ${pct(summary.human_verifiable_coverage)} · 准确率 ${pct(summary.resolved_decided_accuracy)}`;}
+function render(){if(!visible.length){$('slot').textContent='没有符合筛选条件的车位';$('frames').innerHTML='';return}const c=visible[index];$('position').textContent=`${index+1} / ${visible.length}`;$('slot').textContent=c.slot_id;$('reviewStatus').textContent=c.review_status;$('reasons').textContent=(c.automatic_reasons||[]).join(' / ');$('map').src=c.map_url||'';$('map').style.display=c.map_url?'block':'none';$('frames').innerHTML=(c.evidence_frames||[]).map((f,i)=>`<article class="frame"><img src="${f.asset_url}" data-src="${f.asset_url}"><div class="meta">${i+1} · LiDAR ${f.lidar_frame} · Camera ${f.camera_frame}<br>角度 ${Number(f.bearing_deg).toFixed(1)}° · 距离 ${Number(f.distance_m).toFixed(1)}m · 同步差 ${(1000*Math.abs(f.camera_lidar_dt_sec)).toFixed(1)}ms</div></article>`).join('')||'<p class="warning">没有足够可信的前视相机图片，请标“无法判断”。</p>';$('frames').querySelectorAll('img').forEach(img=>img.onclick=()=>{$('zoomImg').src=img.dataset.src;$('zoom').showModal()});$('reason').style.display='none';$('reason').value='';$('saved').textContent=c.human_label?`已保存：${c.human_label.human_label}`:'';if(c.algorithm){$('audit').classList.remove('hidden');$('audit').innerHTML=`<b>标注后对比</b>：算法 ${c.algorithm.prediction}（${Number(c.algorithm.score).toFixed(3)}） · <span class="comparison">${c.comparison}</span>`}else{$('audit').classList.add('hidden');$('audit').innerHTML=''}}
+async function save(label){const c=visible[index];let reason='';if(label==='unobservable'){ $('reason').style.display='inline-block';reason=$('reason').value;if(!reason){$('saved').textContent='请先选择无法判断的原因';return}}$('saved').textContent='保存中…';const r=await fetch('/api/labels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sample_id:c.sample_id,slot_id:c.slot_id,human_label:label,reason})});const data=await r.json();if(!r.ok){$('saved').textContent=data.error||'保存失败';return}c.human_label=data.label;c.algorithm=data.algorithm;c.comparison=data.comparison;summary=data.summary;$('saved').textContent='已写入磁盘';renderStats();setTimeout(()=>{if(index<visible.length-1){index++;render()}},350)}
+document.querySelectorAll('[data-label]').forEach(b=>b.onclick=()=>save(b.dataset.label));$('reason').onchange=()=>{if($('reason').value)save('unobservable')};$('prev').onclick=()=>{if(index>0){index--;render()}};$('next').onclick=()=>{if(index<visible.length-1){index++;render()}};$('filter').onchange=()=>{index=0;applyFilter()};document.addEventListener('keydown',e=>{if(e.target.tagName==='SELECT')return;if(e.key==='1')save('occupied');if(e.key==='2')save('free');if(e.key==='3'){$('reason').style.display='inline-block';$('reason').focus()}if(e.key==='ArrowLeft')$('prev').click();if(e.key==='ArrowRight')$('next').click()});
+load().catch(e=>{$('slot').textContent='加载失败：'+e});
+</script></body></html>

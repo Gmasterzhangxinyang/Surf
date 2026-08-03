@@ -1,0 +1,25 @@
+{
+  "schema_version": "camera-calibration/2.0",
+  "camera_model": "fisheye",
+  "image_width": 1280,
+  "image_height": 720,
+  "K": [
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0]
+  ],
+  "D": [0.0, 0.0, 0.0, 0.0],
+  "T_vehicle_camera": [
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0]
+  ],
+  "extrinsic_translation_unit": "m",
+  "calibration_id": "PLACEHOLDER_DO_NOT_USE_CAMERA_FRONT",
+  "calibration_time": "1970-01-01T00:00:00Z",
+  "vehicle_frame": "vehicle_PLACEHOLDER",
+  "camera_frame": "camera_front_PLACEHOLDER",
+  "is_placeholder": true,
+  "placeholder_notice": "EXAMPLE STRUCTURE ONLY. Every numeric value is a placeholder and runtime loading rejects this file by default."
+}

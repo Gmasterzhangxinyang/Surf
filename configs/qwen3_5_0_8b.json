@@ -1,0 +1,29 @@
+{
+  "schema_version": "parkingagent-local-vlm/1.0",
+  "repository": "Qwen/Qwen3.5-0.8B",
+  "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "local_model_dir": "models/Qwen3.5-0.8B",
+  "weight_files": [
+    {
+      "name": "model.safetensors-00001-of-00001.safetensors",
+      "size_bytes": 1746942600,
+      "sha256": "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696"
+    }
+  ],
+  "served_model_name": "Qwen/Qwen3.5-0.8B",
+  "api_base_url": "http://127.0.0.1:8010/v1",
+  "runtime": {
+    "engine": "vllm",
+    "vllm_version": "0.25.1",
+    "host": "127.0.0.1",
+    "port": 8010,
+    "gpu_memory_utilization": 0.12,
+    "max_model_len": 4096,
+    "max_num_seqs": 1,
+    "max_images_per_prompt": 4,
+    "max_videos_per_prompt": 0,
+    "enforce_eager": true,
+    "use_flashinfer_sampler": false,
+    "minimum_free_gpu_memory_mib": 7500
+  }
+}

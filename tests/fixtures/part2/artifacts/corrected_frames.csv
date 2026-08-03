@@ -1,0 +1,4 @@
+lidar_frame,lidar_timestamp,camera_frame,camera_timestamp,sync_source
+100,10.0,1100,9.98,corrected
+102,10.2,1102,10.18,corrected
+104,10.4,1104,10.38,corrected

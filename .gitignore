@@ -1,42 +1,60 @@
-# Dataset (too large for git)
-v1.0-mini/
-
-# Python cache
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
 
-# Model checkpoints
-train_output/*.pth
-*.pth
-*.pt
-
-# NumPy arrays
-*.npy
-
-# Output images
-*.png
-*.jpg
-ogm_output/
-output/
-output_real/
-
-# Agent运行数据
-agent_training_data.jsonl
-
-# 训练输出目录
-train_output/
-
-# Conda / venv
+# Local environments and credentials
+.venv*/
+.openai-runtime/
+.secrets/
 .env
-env/
-venv/
+.env.*
+!.env.example
+*api_key*
+*secret*
 
-# macOS
-.DS_Store
-
-# IDE
-.vscode/
+# Editors and operating systems
 .idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.orig
+*.swp
+
+# Large/private runtime assets
+models/
+outputs/
+protected_artifacts/
+external/
+raw_data/
+dataset/
+datasets/
+examples/
+*.bin
+*.bag
+*.pcd
+*.ply
+*.npy
+*.npz
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+!tests/fixtures/**/*.pcd
+
+# TeX build products
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/parkingagent.pdf
