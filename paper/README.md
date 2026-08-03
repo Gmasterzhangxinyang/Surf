@@ -4,12 +4,11 @@ This directory contains the paper draft **DASP-Park: Decision-Aware Active Seman
 
 ## Deliverables
 
-- `DASP-Park_Decision-Aware_Active_Semantic_Perception.pdf`: six-page IEEEtran two-column manuscript compiled from LaTeX.
+- `DASP-Park_Decision-Aware_Active_Semantic_Perception.pdf`: seven-page IEEEtran two-column manuscript compiled from LaTeX.
 - `parkingagent.tex`: canonical editable LaTeX source.
 - `references.bib`: bibliography database.
-- `figures/fig1_dasp_park_method.{svg,pdf}`: canonical publication-style Figure 1.
-- `figures/`: the framework overview and real-case evidence figure used by the manuscript.
-- `figure_assets/`: three compact real-evidence thumbnails required to rebuild Figure 1.
+- `figures/fig1_dasp_park_overview.png`: canonical DASP-Park system overview used as Figure 1.
+- `figures/`: active-perception, real-case, temporal-ablation, and VLM-ablation figures used by the manuscript.
 
 ## Rebuild
 
@@ -25,9 +24,8 @@ Equations use native `amsmath` typesetting with `newtxmath`; tables and referenc
 
 All reported frame-6241 metrics are derived from the locked 14-slot human GT, including the 2026-08-01 revision of `slot_0918` and `slot_0953` to Free. The Part 1 ablation reuses the frozen 16 prediction files and evaluates them against this revised GT.
 
-The formal manuscript uses a deterministic SVG/PDF framework figure with real
-map, camera, and target-local LiDAR evidence thumbnails. Rebuild it from the
-repository root with `python scripts/build_dasp_park_method_figure.py`.
+The formal manuscript embeds `fig1_dasp_park_overview.png` directly as the
+system overview and retains the source image alongside the LaTeX file.
 
 The author field intentionally remains `Anonymous Author(s)` until submission metadata is provided.
 
